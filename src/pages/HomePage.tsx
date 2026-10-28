@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Calendar, Clock, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, ArrowUp, Calendar, Clock, Hourglass, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import { LOCATIONS, PHOTOS, ROOM_TYPES } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
+import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { LogoMark, useTitle } from '../components/ui'
-import { formatMoney, overnightStay, stayHours, todayISO } from '../utils'
+import { checkoutLabel, formatMoney, overnightStay, todayISO } from '../utils'
 
 export function HomePage() {
   useTitle('Kabin')
@@ -14,10 +15,25 @@ export function HomePage() {
   const navigate = useNavigate()
   const location = LOCATIONS.find((item) => item.id === draft.locationId) ?? LOCATIONS[0]
   const [district, setDistrict] = useState('Tất cả')
+  const [showTop, setShowTop] = useState(false)
   const districts = ['Tất cả', ...new Set(LOCATIONS.map((item) => item.district))]
   const places = LOCATIONS.filter((item) => district === 'Tất cả' || item.district === district).sort(
     (a, b) => a.distance - b.distance,
   )
+
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 640)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const backToBooking = () => {
+    const card = document.getElementById('dat-phong')
+    if (!card) return
+    const top = card.getBoundingClientRect().top + window.scrollY - 86
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+  }
 
   const submit = (type?: string) => {
     const query = type ? `?loai=${encodeURIComponent(type)}` : ''
@@ -43,7 +59,8 @@ export function HomePage() {
         </div>
       </section>
       <form
-          className="search-card"
+          id="dat-phong"
+        className="search-card"
           onSubmit={(event) => {
             event.preventDefault()
             submit()
@@ -88,21 +105,22 @@ export function HomePage() {
                   setDraft(
                     draft.overnight
                       ? { time, ...overnightStay(time) }
-                      : { time, duration: stayHours(time, draft.checkoutTime) },
+                      : { time, checkoutTime: checkoutLabel(time, draft.duration).time },
                   )
                 }
               />
             </div>
             <div className="control">
-              <Clock size={18} />
-              <TimeField
-                label="Giờ trả phòng"
-                value={draft.checkoutTime}
-                align="end"
-                onChange={(checkoutTime) =>
-                  setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
-                }
-              />
+              <Hourglass size={18} />
+              <span>
+                <span className="control-label">Thời lượng</span>
+                <DurationSelect
+                  time={draft.time}
+                  duration={draft.duration}
+                  overnight={draft.overnight}
+                  onChange={(next) => setDraft(next)}
+                />
+              </span>
             </div>
             <button className="btn btn-primary" type="submit">
               Xem phòng trống <ArrowRight size={18} />
@@ -333,6 +351,11 @@ export function HomePage() {
           </div>
         </div>
       </section>
+      {showTop ? (
+        <button type="button" className="to-book no-print" onClick={backToBooking}>
+          <ArrowUp size={18} /> Đặt phòng
+        </button>
+      ) : null}
     </div>
   )
 }
