@@ -683,9 +683,21 @@ ul { margin: 0; padding: 0; list-style: none; }
   .login-card { margin-top: 8px; }
   .hero { height: 340px; border-radius: 20px; }
   .hero-copy { left: 18px; right: 18px; top: 28px; }
-  .search-card { position: static; margin: -36px 0 20px; }
+  .search-card { position: relative; z-index: 2; margin: -36px 0 20px; }
+  .search-head, .section-head, .catalog-bar {
+    flex-direction: column; align-items: flex-start;
+  }
+  .section-head .text-btn, .catalog-bar > strong, .seg button, .search-row > .btn { white-space: nowrap; }
   .search-grid { grid-template-columns: 1fr 1fr; }
   .search-grid > label.control { grid-column: 1 / -1; }
+  .search-row { flex-wrap: wrap; align-items: stretch; }
+  .search-row > .control { flex: 1 1 120px; min-width: 0; }
+  .search-row > .control.grow { flex: 1 0 100%; }
+  .search-row > .btn { flex: 0 0 auto; justify-content: center; }
+  .catalog-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+  .catalog-tools label { display: inline-flex; align-items: center; font-size: 0; white-space: nowrap; }
+  .catalog-tools select { font-size: 15px; }
+  .chip-row { flex-wrap: wrap; overflow: visible; }
   .loc-grid, .cards-3, .steps-grid, .guide-grid, .place-grid, .about-split, .reason-grid { grid-template-columns: 1fr; }
   .cta-foot { flex-direction: column; align-items: flex-start; }
   .about-split img { height: 220px; }
