@@ -4,7 +4,7 @@ import { Bookmark, Copy } from 'lucide-react'
 import { getLocation, isPromoExpired, PROMOS, promoValueLabel, type Promo } from '../data'
 import { useStore } from '../store'
 import { useTitle } from '../components/ui'
-import { copyText, cx, formatDate, formatMoney } from '../utils'
+import { asset, copyText, cx, formatDate, formatMoney } from '../utils'
 
 export function PromosPage() {
   useTitle('Ưu đãi')
@@ -33,7 +33,7 @@ export function PromosPage() {
           <h1>Thêm ưu đãi, trọn khoảng nghỉ</h1>
           <p>Chọn mã phù hợp cho lần đặt phòng tiếp theo.</p>
         </div>
-        <img src="/photos/promo.jpg" alt="Thiệp ưu đãi Kabin" />
+        <img src={asset('/photos/promo.jpg')} alt="Thiệp ưu đãi Kabin" />
       </section>
       <div className="tabs">
         <button type="button" className={tab === 'all' ? 'on' : ''} onClick={() => setTab('all')}>

@@ -19,6 +19,7 @@ import { AccountPage } from './pages/AccountPage'
 import { PromosPage } from './pages/PromosPage'
 import { HelpPage } from './pages/HelpPage'
 import { PoliciesPage } from './pages/PoliciesPage'
+import { TermsPage } from './pages/TermsPage'
 import { LookupPage, NotFoundPage } from './pages/LookupPage'
 
 function ScrollTop() {
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="tai-khoan" element={<AccountPage />} />
           <Route path="uu-dai" element={<PromosPage />} />
           <Route path="tro-giup" element={<HelpPage />} />
+          <Route path="dieu-khoan" element={<TermsPage />} />
           <Route path="chinh-sach" element={<PoliciesPage />} />
           <Route path="chinh-sach/:id" element={<PoliciesPage />} />
           <Route path="tra-cuu" element={<LookupPage />} />

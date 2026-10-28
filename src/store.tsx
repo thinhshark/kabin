@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { DEMO_PHONE, DEMO_USER, quoteOf, SEED_BOOKINGS, type Booking } from './data'
-import { normalizePhone, todayISO } from './utils'
+import { checkoutLabel, normalizePhone, todayISO } from './utils'
 
 export type User = {
   name: string
@@ -15,6 +15,7 @@ export type Draft = {
   roomId: string
   date: string
   time: string
+  checkoutTime: string
   duration: number
   name: string
   phone: string
@@ -54,6 +55,7 @@ function emptyDraft(): Draft {
     roomId: '',
     date: todayISO(),
     time: '14:00',
+    checkoutTime: '17:00',
     duration: 3,
     name: '',
     phone: '',
@@ -81,15 +83,32 @@ function load(): Persisted {
     const raw = localStorage.getItem(KEY)
     if (!raw) return fallback
     const parsed = JSON.parse(raw) as Persisted
+    const draft = { ...emptyDraft(), ...parsed.draft }
+    if (!parsed.draft?.checkoutTime) {
+      draft.checkoutTime = checkoutLabel(draft.time, draft.duration).time
+    }
     return {
       user: parsed.user ?? null,
-      bookings: parsed.bookings?.length ? parsed.bookings : SEED_BOOKINGS,
-      draft: { ...emptyDraft(), ...parsed.draft },
+      bookings: withFreshSeeds(parsed.bookings),
+      draft,
       lookupPhone: parsed.lookupPhone ?? '',
     }
   } catch {
     return fallback
   }
+}
+
+function withFreshSeeds(saved: Persisted['bookings'] | undefined) {
+  if (!saved?.length) return SEED_BOOKINGS
+  const seeds = new Map(SEED_BOOKINGS.map((booking) => [booking.id, booking]))
+  const merged = saved.map((booking) => {
+    const seed = seeds.get(booking.id)
+    return seed && seed.status === booking.status ? { ...booking, date: seed.date } : booking
+  })
+  for (const seed of SEED_BOOKINGS) {
+    if (!merged.some((booking) => booking.id === seed.id)) merged.push(seed)
+  }
+  return merged
 }
 
 function codeFrom(date: string) {

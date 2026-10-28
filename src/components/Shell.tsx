@@ -7,7 +7,7 @@ import { Logo } from './ui'
 
 const NAV = [
   { to: '/', label: 'Trang chủ', end: true },
-  { to: '/co-so', label: 'Cơ sở', end: false },
+  { to: '/co-so', label: 'Hệ thống cơ sở', end: false },
   { to: '/huong-dan', label: 'Hướng dẫn', end: false },
 ]
 
@@ -93,8 +93,12 @@ export function Shell() {
       </main>
       <footer className="site-footer">
         <div className="footer-inner">
-          <Logo />
+          <div className="footer-brand">
+            <Logo />
+            <p className="footer-note">Kabin là một phần trong hệ sinh thái T-Box.</p>
+          </div>
           <nav aria-label="Chân trang">
+            <Link to="/dieu-khoan">Điều khoản & Sử dụng</Link>
             <Link to="/chinh-sach">Chính sách</Link>
             <Link to="/tro-giup">Câu hỏi thường gặp</Link>
             <Link to="/tra-cuu">Tra cứu</Link>

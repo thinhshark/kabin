@@ -11,7 +11,7 @@ export function PoliciesPage() {
   return (
     <div className="wrap page">
       <p className="crumb">
-        <Link to="/">Trang chủ</Link> <span>/</span> <Link to="/co-so">Cơ sở</Link> <span>/</span> Chính sách & quy định
+        <Link to="/">Trang chủ</Link> <span>/</span> <Link to="/co-so">Hệ thống cơ sở</Link> <span>/</span> Chính sách & quy định
       </p>
       <h1>Chính sách & quy định</h1>
       <p className="lead">Thông tin cần biết trước khi đặt phòng tại Kabin.</p>

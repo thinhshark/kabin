@@ -2,6 +2,10 @@ export function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
+export function asset(path: string) {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
+}
+
 export function todayISO() {
   const d = new Date()
   const tz = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -29,9 +33,19 @@ export function slotPrice(price3h: number, hours: number) {
   return Math.round((price3h / 3) * hours / 1000) * 1000
 }
 
+export function clockMinutes(value: string) {
+  const [h = 0, m = 0] = value.split(':').map(Number)
+  return h * 60 + m
+}
+
+export function stayHours(start: string, end: string) {
+  let diff = clockMinutes(end) - clockMinutes(start)
+  if (diff <= 0) diff += 24 * 60
+  return diff / 60
+}
+
 export function checkoutLabel(time: string, duration: number) {
-  const [h, m] = time.split(':').map(Number)
-  const total = h * 60 + m + duration * 60
+  const total = clockMinutes(time) + duration * 60
   const mins = ((total % (24 * 60)) + 24 * 60) % (24 * 60)
   const hh = String(Math.floor(mins / 60)).padStart(2, '0')
   const mm = String(mins % 60).padStart(2, '0')
@@ -40,7 +54,9 @@ export function checkoutLabel(time: string, duration: number) {
 }
 
 export function isPastSlot(date: string, time: string) {
-  return new Date(`${date}T${time}:00`).getTime() < Date.now()
+  const base = new Date(`${date}T00:00:00`)
+  if (Number.isNaN(base.getTime())) return false
+  return base.getTime() + clockMinutes(time) * 60000 < Date.now()
 }
 
 export function normalizePhone(input: string) {

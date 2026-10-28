@@ -64,7 +64,7 @@ export function GuidePage() {
 
       <div className="guide-grid">
         <article className="guide-card">
-          <img src={PHOTOS.entrance} alt="Sảnh Kabin" />
+          <img src={PHOTOS.exterior} alt="Mặt ngoài cơ sở" />
           <span>01</span>
           <h2>Đến cơ sở</h2>
           <p>Tới {location?.name ?? 'cơ sở trên vé'} và đi chuyển đến khu vực cổng ra vào.</p>
@@ -79,7 +79,7 @@ export function GuidePage() {
           )}
         </article>
         <article className="guide-card">
-          <img src={PHOTOS.keypad} alt="Bàn phím khóa cổng" />
+          <img src={PHOTOS.gateLock} alt="Khóa mã trên cổng" />
           <span>02</span>
           <h2>Mở cổng</h2>
           <p>Nhập mã cổng trên bàn phím khóa, kể cả phím #.</p>
@@ -94,9 +94,9 @@ export function GuidePage() {
           )}
         </article>
         <article className="guide-card">
-          <img src={PHOTOS.door} alt="Cửa phòng" />
+          <img src={PHOTOS.roomLock} alt="Khóa mã trên cửa phòng" />
           <span>03</span>
-          <h2>Vào phòng {room?.number ?? ''}</h2>
+          <h2>{room?.number ? `Nhập mã phòng ${room.number}` : 'Nhập mã phòng'}</h2>
           <p>Kiểm tra đúng số phòng và nhập mã để mở cửa.</p>
           {showCodes ? (
             <div className="code-box">
@@ -142,7 +142,7 @@ export function GuidePage() {
 function CrumbLike() {
   return (
     <p className="crumb">
-      <Link to="/">Trang chủ</Link> <span>/</span> <Link to="/co-so">Cơ sở</Link> <span>/</span> Hướng dẫn tự nhận phòng
+      <Link to="/">Trang chủ</Link> <span>/</span> <Link to="/co-so">Hệ thống cơ sở</Link> <span>/</span> Hướng dẫn tự nhận phòng
     </p>
   )
 }

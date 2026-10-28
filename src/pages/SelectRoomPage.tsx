@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info } from 'lucide-react'
-import { DURATIONS, FILTER_AMENITIES, getLocation, roomsAt, TIMES, type Amenity } from '../data'
+import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin } from 'lucide-react'
+import { DURATIONS, FILTER_AMENITIES, getLocation, ROOMS, roomsAt, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
+import { TimeField } from '../components/TimeField'
 import { AmenityIcon, Crumb, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, cx, formatMoney, isPastSlot, slotPrice } from '../utils'
+import { checkoutLabel, cx, formatMoney, isPastSlot, slotPrice, stayHours, todayISO } from '../utils'
 
 export function SelectRoomPage() {
   const { id = '' } = useParams()
@@ -18,22 +19,39 @@ export function SelectRoomPage() {
   const [onlyOpen, setOnlyOpen] = useState(false)
   const [sort, setSort] = useState<'asc' | 'desc' | 'number'>('asc')
 
+  const today = todayISO()
+  useEffect(() => {
+    if (draft.date < today) setDraft({ date: today })
+  }, [draft.date, setDraft, today])
+
   const end = checkoutLabel(draft.time, draft.duration)
   const past = isPastSlot(draft.date, draft.time)
+  const stayLabel = hoursLabel(draft.duration)
 
-  const rooms = useMemo(() => {
-    if (!location) return []
-    const list = roomsAt(location.id).filter((room) => {
+  const { here, elsewhere } = useMemo(() => {
+    if (!location) return { here: [] as Room[], elsewhere: [] as Room[] }
+    const matches = (room: Room) => {
       if (typeFilter && room.type !== typeFilter) return false
       if (onlyOpen && !room.available) return false
       return amenities.every((item) => room.amenities.includes(item))
-    })
-    list.sort((a, b) => {
+    }
+    const byChoice = (a: Room, b: Room) => {
       if (sort === 'desc') return b.price3h - a.price3h
-      if (sort === 'number') return a.number.localeCompare(b.number)
+      if (sort === 'number') return a.number.localeCompare(b.number, 'vi')
       return a.price3h - b.price3h
+    }
+    const hereRooms = roomsAt(location.id).filter(matches)
+    hereRooms.sort((a, b) => {
+      if (a.available !== b.available) return a.available ? -1 : 1
+      return byChoice(a, b)
     })
-    return list
+    const otherRooms = ROOMS.filter((room) => room.locationId !== location.id && room.available && matches(room))
+    otherRooms.sort((a, b) => {
+      const distance = (getLocation(a.locationId)?.distance ?? 0) - (getLocation(b.locationId)?.distance ?? 0)
+      if (distance !== 0) return distance
+      return byChoice(a, b)
+    })
+    return { here: hereRooms, elsewhere: otherRooms }
   }, [location, typeFilter, onlyOpen, amenities, sort])
 
   if (!location) {
@@ -45,14 +63,14 @@ export function SelectRoomPage() {
     )
   }
 
-  const openCount = rooms.filter((room) => room.available).length
+  const openCount = here.filter((room) => room.available).length + elsewhere.length
 
   return (
     <div className="wrap page">
       <Crumb
         items={[
           { label: 'Trang chủ', to: '/' },
-          { label: 'Cơ sở', to: '/co-so' },
+          { label: 'Hệ thống cơ sở', to: '/co-so' },
           { label: location.name, to: `/co-so/${location.id}` },
           { label: 'Chọn phòng' },
         ]}
@@ -61,8 +79,13 @@ export function SelectRoomPage() {
         <div>
           <h1>Chọn phòng cho khoảng nghỉ của bạn</h1>
           <p className="meta-line">
-            {location.name} · {location.city}
-            <Link to="/co-so">Đổi cơ sở</Link>
+            <span className="place-line">
+              <MapPin size={16} />
+              {location.name} · {location.city}
+            </span>
+            <Link to="/co-so" className="change-place">
+              Đổi cơ sở
+            </Link>
           </p>
         </div>
       </div>
@@ -77,27 +100,48 @@ export function SelectRoomPage() {
         <label className="control">
           <Calendar size={18} />
           <span>
-            <span className="control-label">Ngày nghỉ</span>
-            <input type="date" value={draft.date} onChange={(event) => setDraft({ date: event.target.value })} />
+            <span className="control-label">Chọn ngày</span>
+            <input
+              type="date"
+              min={today}
+              value={draft.date < today ? today : draft.date}
+              onChange={(event) => {
+                const date = event.target.value
+                if (date && date < today) return
+                setDraft({ date })
+              }}
+            />
           </span>
         </label>
-        <label className="control">
+        <div className="control">
           <Clock size={18} />
-          <span>
-            <span className="control-label">Giờ nhận phòng</span>
-            <select value={draft.time} onChange={(event) => setDraft({ time: event.target.value })}>
-              {TIMES.map((time) => (
-                <option key={time}>{time}</option>
-              ))}
-            </select>
-          </span>
-        </label>
+          <TimeField
+            label="Giờ nhận phòng"
+            value={draft.time}
+            onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+          />
+        </div>
+        <div className="control">
+          <Clock size={18} />
+          <TimeField
+            label="Giờ trả phòng"
+            value={draft.checkoutTime}
+            align="end"
+            onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+          />
+        </div>
         <label className="control">
           <Hourglass size={18} />
           <span>
-            <span className="control-label">Thời lượng nghỉ</span>
-            <select value={draft.duration} onChange={(event) => setDraft({ duration: Number(event.target.value) })}>
-              {DURATIONS.map((hours) => (
+            <span className="control-label">Thời lượng</span>
+            <select
+              value={draft.duration}
+              onChange={(event) => {
+                const duration = Number(event.target.value)
+                setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
+              }}
+            >
+              {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
                 <option key={hours} value={hours}>
                   {hours} giờ
                 </option>
@@ -105,16 +149,6 @@ export function SelectRoomPage() {
             </select>
           </span>
         </label>
-        <div className="control readonly">
-          <Clock size={18} />
-          <span>
-            <span className="control-label">Trả phòng lúc</span>
-            <strong>
-              {end.time}
-              <small> {draft.date.split('-').reverse().join('/')}</small>
-            </strong>
-          </span>
-        </div>
         <button className="btn btn-primary" type="submit">
           Cập nhật
         </button>
@@ -151,7 +185,7 @@ export function SelectRoomPage() {
         <div>
           <div className="catalog-bar">
             <strong>
-              {openCount} phòng còn trống <span>{draft.time}–{end.time} · {draft.duration} giờ</span>
+              {openCount} phòng còn trống <span>{draft.time}–{draft.checkoutTime}{end.nextDay ? ' hôm sau' : ''} · {stayLabel}</span>
             </strong>
             <label>
               Sắp xếp theo
@@ -163,59 +197,46 @@ export function SelectRoomPage() {
             </label>
           </div>
           <div className="stack">
-            {rooms.length === 0 ? (
+            {here.length === 0 && elsewhere.length === 0 ? (
               <div className="empty">
                 <strong>Không có phòng khớp bộ lọc</strong>
                 <p>Thử bỏ bớt tiện ích hoặc đổi thời gian.</p>
               </div>
             ) : (
-              rooms.map((room) => {
-                const price = slotPrice(room.price3h, draft.duration)
-                return (
-                  <article key={room.id} className={cx('room-row', !room.available && 'off')}>
-                    <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
-                    <div>
-                      <h2>
-                        Phòng {room.number} · {room.type}
-                      </h2>
-                      <p className="meta-line">
-                        {room.amenities.slice(0, 3).map((item) => (
-                          <span key={item}>
-                            <AmenityIcon name={item} /> {item}
-                          </span>
-                        ))}
-                      </p>
-                      {room.available ? (
-                        <span className="pill pill-upcoming">Còn trống</span>
-                      ) : (
-                        <span className="pill pill-expired">Không khả dụng trong khung giờ này</span>
-                      )}
-                    </div>
-                    <div className="room-row-end">
-                      <b className="price">
-                        {formatMoney(price)} <small>/ {draft.duration} giờ</small>
-                      </b>
-                      {room.available ? (
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          disabled={past}
-                          onClick={() => {
-                            setDraft({ locationId: location.id, roomId: room.id })
-                            navigate(`/co-so/${location.id}/phong/${room.id}`)
-                          }}
-                        >
-                          Xem phòng <ArrowRight size={16} />
-                        </button>
-                      ) : (
-                        <button type="button" className="btn btn-muted" disabled>
-                          Không khả dụng
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                )
-              })
+              <>
+                {here.map((room) => (
+                  <RoomChoice
+                    key={room.id}
+                    room={room}
+                    stayLabel={stayLabel}
+                    price={slotPrice(room.price3h, draft.duration)}
+                    past={past}
+                    onOpen={(placeId) => {
+                      setDraft({ locationId: placeId, roomId: room.id })
+                      navigate(`/co-so/${placeId}/phong/${room.id}`)
+                    }}
+                  />
+                ))}
+                {elsewhere.length > 0 ? (
+                  <div className="other-rooms-head">
+                    <h3>Phòng trống ở cơ sở khác</h3>
+                    <p>Thêm lựa chọn gần bạn, trong cùng khung giờ.</p>
+                  </div>
+                ) : null}
+                {elsewhere.map((room) => (
+                  <RoomChoice
+                    key={room.id}
+                    room={room}
+                    stayLabel={stayLabel}
+                    price={slotPrice(room.price3h, draft.duration)}
+                    past={past}
+                    onOpen={(placeId) => {
+                      setDraft({ locationId: placeId, roomId: room.id })
+                      navigate(`/co-so/${placeId}/phong/${room.id}`)
+                    }}
+                  />
+                ))}
+              </>
             )}
           </div>
           <div className="note-row">
@@ -230,4 +251,70 @@ export function SelectRoomPage() {
       </div>
     </div>
   )
+}
+
+function RoomChoice({
+  room,
+  stayLabel,
+  price,
+  past,
+  onOpen,
+}: {
+  room: Room
+  stayLabel: string
+  price: number
+  past: boolean
+  onOpen: (locationId: string) => void
+}) {
+  const place = getLocation(room.locationId)
+  return (
+    <article className={cx('room-row', !room.available && 'off')}>
+      <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
+      <div>
+        <h2>
+          Phòng {room.number} · {room.type}
+        </h2>
+        <p className="room-place">
+          <MapPin size={14} />
+          {place?.name} · Cách {place ? place.distance.toString().replace('.', ',') : ''} km
+        </p>
+        <p className="meta-line">
+          {room.amenities.slice(0, 3).map((item) => (
+            <span key={item}>
+              <AmenityIcon name={item} /> {item}
+            </span>
+          ))}
+        </p>
+        {room.available ? (
+          <span className="pill pill-upcoming">Còn trống</span>
+        ) : (
+          <span className="pill pill-expired">Không khả dụng trong khung giờ này</span>
+        )}
+      </div>
+      <div className="room-row-end">
+        <b className="price">
+          <small>chỉ từ </small>
+          {formatMoney(price)} <small>/ {stayLabel}</small>
+        </b>
+        {room.available ? (
+          <button type="button" className="btn btn-primary" disabled={past} onClick={() => onOpen(room.locationId)}>
+            Xem phòng <ArrowRight size={16} />
+          </button>
+        ) : (
+          <button type="button" className="btn btn-muted" disabled>
+            Không khả dụng
+          </button>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function hoursLabel(hours: number) {
+  const minutes = Math.round(hours * 60)
+  const whole = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (!rest) return `${whole} giờ`
+  if (!whole) return `${rest} phút`
+  return `${whole} giờ ${rest} phút`
 }

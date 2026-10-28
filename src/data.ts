@@ -1,4 +1,4 @@
-import { formatMoney, shiftISO, slotPrice, todayISO } from './utils'
+import { asset, formatMoney, shiftISO, slotPrice, todayISO } from './utils'
 
 export type Amenity =
   | 'Máy chiếu'
@@ -87,16 +87,19 @@ export type Booking = {
 }
 
 export const PHOTOS = {
-  hero: '/photos/hero.jpg',
-  cozy: '/photos/cozy.jpg',
-  cinema: '/photos/cinema.jpg',
-  relax: '/photos/relax.jpg',
-  bath: '/photos/bath.jpg',
-  corner: '/photos/corner.jpg',
-  entrance: '/photos/entrance.jpg',
-  keypad: '/photos/keypad.jpg',
-  door: '/photos/door.jpg',
-  promo: '/photos/promo.jpg',
+  hero: asset('/photos/hero.jpg'),
+  cozy: asset('/photos/cozy.jpg'),
+  cinema: asset('/photos/cinema.jpg'),
+  relax: asset('/photos/relax.jpg'),
+  bath: asset('/photos/bath.jpg'),
+  corner: asset('/photos/corner.jpg'),
+  entrance: asset('/photos/entrance.jpg'),
+  keypad: asset('/photos/keypad.jpg'),
+  door: asset('/photos/door.jpg'),
+  exterior: asset('/photos/exterior.jpg'),
+  gateLock: asset('/photos/gate-lock.jpg'),
+  roomLock: asset('/photos/room-lock.jpg'),
+  promo: asset('/photos/promo.jpg'),
 }
 
 export const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00']

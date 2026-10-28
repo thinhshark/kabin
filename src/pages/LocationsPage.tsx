@@ -7,7 +7,7 @@ import { AmenityList, Photo, useTitle } from '../components/ui'
 import { cx, formatMoney } from '../utils'
 
 export function LocationsPage() {
-  useTitle('Cơ sở')
+  useTitle('Hệ thống cơ sở')
   const { showToast } = useStore()
   const [query, setQuery] = useState('')
   const [district, setDistrict] = useState('Tất cả')
@@ -45,9 +45,9 @@ export function LocationsPage() {
   return (
     <div className="wrap page">
       <p className="crumb">
-        <Link to="/">Trang chủ</Link> <span>/</span> Cơ sở
+        <Link to="/">Trang chủ</Link> <span>/</span> Hệ thống cơ sở
       </p>
-      <h1>Tìm Kabin gần bạn</h1>
+      <h1>Hệ thống cơ sở</h1>
       <p className="lead">Chọn một điểm dừng chân cho khoảng nghỉ của bạn.</p>
 
       <form className="search-row" onSubmit={(event) => event.preventDefault()}>

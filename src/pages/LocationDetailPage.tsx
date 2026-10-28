@@ -28,7 +28,7 @@ export function LocationDetailPage() {
 
   return (
     <div className="wrap page">
-      <Crumb items={[{ label: 'Trang chủ', to: '/' }, { label: 'Cơ sở', to: '/co-so' }, { label: location.name }]} />
+      <Crumb items={[{ label: 'Trang chủ', to: '/' }, { label: 'Hệ thống cơ sở', to: '/co-so' }, { label: location.name }]} />
       <div className="title-row">
         <div>
           <h1>{location.name}</h1>
@@ -61,8 +61,14 @@ export function LocationDetailPage() {
               Giờ nhận phòng
               <span className="control">
                 <Clock size={16} />
-                <select value={draft.time} onChange={(event) => setDraft({ time: event.target.value, locationId: location.id })}>
-                  {TIMES.map((time) => (
+                <select
+                  value={draft.time}
+                  onChange={(event) => {
+                    const time = event.target.value
+                    setDraft({ time, locationId: location.id, checkoutTime: checkoutLabel(time, draft.duration).time })
+                  }}
+                >
+                  {(TIMES.includes(draft.time) ? TIMES : [draft.time, ...TIMES]).map((time) => (
                     <option key={time}>{time}</option>
                   ))}
                 </select>
@@ -74,9 +80,16 @@ export function LocationDetailPage() {
                 <Hourglass size={16} />
                 <select
                   value={draft.duration}
-                  onChange={(event) => setDraft({ duration: Number(event.target.value), locationId: location.id })}
+                  onChange={(event) => {
+                    const duration = Number(event.target.value)
+                    setDraft({
+                      duration,
+                      locationId: location.id,
+                      checkoutTime: checkoutLabel(draft.time, duration).time,
+                    })
+                  }}
                 >
-                  {DURATIONS.map((hours) => (
+                  {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
                     <option key={hours} value={hours}>
                       {hours} giờ
                     </option>

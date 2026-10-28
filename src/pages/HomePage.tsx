@@ -1,15 +1,22 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Calendar, Clock, Hourglass, MapPin } from 'lucide-react'
-import { DURATIONS, LOCATIONS, PHOTOS, ROOM_TYPES, TIMES } from '../data'
+import { ArrowRight, Calendar, Clock, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
+import { LOCATIONS, PHOTOS, ROOM_TYPES } from '../data'
 import { useStore } from '../store'
-import { useTitle } from '../components/ui'
-import { formatMoney, todayISO } from '../utils'
+import { TimeField } from '../components/TimeField'
+import { LogoMark, useTitle } from '../components/ui'
+import { formatMoney, stayHours, todayISO } from '../utils'
 
 export function HomePage() {
   useTitle('Kabin')
   const { draft, setDraft } = useStore()
   const navigate = useNavigate()
   const location = LOCATIONS.find((item) => item.id === draft.locationId) ?? LOCATIONS[0]
+  const [district, setDistrict] = useState('Tất cả')
+  const districts = ['Tất cả', ...new Set(LOCATIONS.map((item) => item.district))]
+  const places = LOCATIONS.filter((item) => district === 'Tất cả' || item.district === district).sort(
+    (a, b) => a.distance - b.distance,
+  )
 
   const submit = (type?: string) => {
     const query = type ? `?loai=${encodeURIComponent(type)}` : ''
@@ -33,7 +40,8 @@ export function HomePage() {
             <p className="hero-pills">Riêng tư · Tiện nghi · Tự nhận phòng</p>
           </div>
         </div>
-        <form
+      </section>
+      <form
           className="search-card"
           onSubmit={(event) => {
             event.preventDefault()
@@ -65,37 +73,29 @@ export function HomePage() {
                 <input type="date" value={draft.date} min={todayISO()} onChange={(event) => setDraft({ date: event.target.value })} />
               </span>
             </label>
-            <label className="control">
+            <div className="control">
               <Clock size={18} />
-              <span>
-                <span className="control-label">Giờ nhận phòng</span>
-                <select value={draft.time} onChange={(event) => setDraft({ time: event.target.value })}>
-                  {TIMES.map((time) => (
-                    <option key={time}>{time}</option>
-                  ))}
-                </select>
-              </span>
-            </label>
-            <label className="control">
-              <Hourglass size={18} />
-              <span>
-                <span className="control-label">Thời lượng</span>
-                <select value={draft.duration} onChange={(event) => setDraft({ duration: Number(event.target.value) })}>
-                  {DURATIONS.map((hours) => (
-                    <option key={hours} value={hours}>
-                      {hours} giờ
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
+              <TimeField
+                label="Giờ nhận phòng"
+                value={draft.time}
+                onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+              />
+            </div>
+            <div className="control">
+              <Clock size={18} />
+              <TimeField
+                label="Giờ trả phòng"
+                value={draft.checkoutTime}
+                align="end"
+                onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+              />
+            </div>
             <button className="btn btn-primary" type="submit">
               Xem phòng trống <ArrowRight size={18} />
             </button>
           </div>
           <p className="hint">Chọn phòng trước, thanh toán ở bước tiếp theo.</p>
         </form>
-      </section>
 
       <section className="section">
         <div className="section-head">
@@ -128,19 +128,197 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="steps-panel">
+      <section className="section">
         <div className="section-head">
-          <h2>Tự nhận phòng, thật đơn giản</h2>
-          <Link to="/huong-dan" className="text-btn">
-            Xem hướng dẫn <ArrowRight size={16} />
+          <div>
+            <p className="kicker">Điểm đến</p>
+            <h2>Chọn cơ sở gần bạn</h2>
+            <p>Từ Cầu Giấy, Tây Hồ đến Ba Đình và Đống Đa. Mỗi cơ sở đều tự nhận phòng bằng mã cửa.</p>
+          </div>
+          <Link to="/co-so" className="text-btn">
+            Xem hệ thống cơ sở <ArrowRight size={16} />
           </Link>
+        </div>
+        <div className="chip-row show home-chips">
+          {districts.map((item) => (
+            <button key={item} type="button" className={item === district ? 'chip on' : 'chip'} onClick={() => setDistrict(item)}>
+              {item}
+            </button>
+          ))}
+        </div>
+        <div className="place-grid">
+          {places.map((place) => (
+            <Link key={place.id} to={`/co-so/${place.id}`} className="place-card">
+              <img src={place.cover} alt={place.name} />
+              <div>
+                <h3>{place.name.replace('Kabin ', '')}</h3>
+                <p>
+                  <MapPin size={14} /> {place.district} · {place.city}
+                </p>
+                <p>{place.blurb}</p>
+                <span className="text-btn">
+                  Xem cơ sở <ArrowRight size={16} />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <div>
+            <p className="kicker">Hệ sinh thái T-Box</p>
+            <h2>Ba thương hiệu, một hệ sinh thái</h2>
+            <p>Kabin là một phần trong hệ sinh thái T-Box, cùng Tbox Stay và Tbox Space.</p>
+          </div>
+        </div>
+        <div className="cards-3">
+          <article className="brand-card stay">
+            <div className="brand-logo">
+              <img src={`${import.meta.env.BASE_URL}brands/tbox.png`} alt="Logo T-Box" />
+            </div>
+            <div>
+              <p className="kicker">Lưu trú theo giờ</p>
+              <h3>Tbox Stay</h3>
+              <p>Không gian riêng để xem phim, thư giãn và hẹn hò, với máy chiếu, bồn tắm và tiện nghi trong phòng.</p>
+              <a className="text-btn" href="https://tboxstay.vn/index.html" target="_blank" rel="noreferrer">
+                Xem Tbox Stay <ArrowRight size={16} />
+              </a>
+            </div>
+          </article>
+          <article className="brand-card here">
+            <div className="brand-logo kabin">
+              <span className="brand-lockup">
+                <LogoMark className="logo-mark" />
+                <span className="logo-word">
+                  <span className="logo-name">KABIN</span>
+                  <span className="logo-sub">STAYS</span>
+                </span>
+              </span>
+            </div>
+            <div>
+              <p className="kicker">Self check-in</p>
+              <h3>Kabin</h3>
+              <p>Đặt phòng theo giờ, thanh toán và nhận mã cửa. Đến là vào phòng, không cần quầy lễ tân.</p>
+              <Link to="/co-so" className="text-btn">
+                Xem phòng Kabin <ArrowRight size={16} />
+              </Link>
+            </div>
+          </article>
+          <article className="brand-card">
+            <div className="brand-logo space">
+              <img src={`${import.meta.env.BASE_URL}brands/tbox-space.png`} alt="T-Box Space" />
+            </div>
+            <div>
+              <p className="kicker">Coffee Working</p>
+              <h3>Tbox Space</h3>
+              <p>Không gian cà phê để làm việc, sắp mở cửa trong hệ sinh thái T-Box.</p>
+              <span className="pill pill-pending">Sắp mở cửa</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="section about-block">
+        <div className="about-split">
+          <div>
+            <p className="kicker">Về Kabin</p>
+            <h2>Đóng cửa lại, phố ở lại bên ngoài.</h2>
+            <p className="about-lead">Một khoảng nghỉ ngắn, đủ riêng để vài giờ cũng trọn.</p>
+            <p>
+              Giữa một ngày dài, thứ cần đôi khi không phải một chuyến đi. Chỉ là một căn phòng yên, một chiếc giường, và thời gian không phải chia với ai.
+            </p>
+            <p>
+              Có người ghé lúc trưa để nằm xuống. Có người ở lại buổi tối để xem phim, ngâm mình, hoặc chỉ ngồi im. Kabin giữ những khoảng ấy khép kín và chậm hơn phố bên ngoài.
+            </p>
+          </div>
+          <img src={PHOTOS.door} alt="Phòng Kabin" />
+        </div>
+        <div className="steps-grid about-points">
+          <div className="step-col">
+            <div>
+              <strong>Giữa phố, vẫn riêng</strong>
+              <p>Một cánh cửa khép lại là đủ. Hà Nội vẫn ồn bên ngoài. Bên trong là khoảng chỉ của bạn.</p>
+            </div>
+          </div>
+          <div className="step-col">
+            <div>
+              <strong>Ngắn cũng là một kỳ nghỉ</strong>
+              <p>Không cần ở lại cả đêm mới được một chỗ của riêng mình. Vài giờ đúng chỗ cũng làm ngày chậm lại.</p>
+            </div>
+          </div>
+          <div className="step-col">
+            <div>
+              <strong>Đủ để nán lại</strong>
+              <p>Giường êm, ánh đèn ấm, một góc yên trong phòng. Những thứ nhỏ đã ở sẵn, để khoảng nghỉ không bị cắt ngang.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <div>
+            <p className="kicker">Vì sao chọn Kabin</p>
+            <h2>Riêng tư hơn, chủ động hơn.</h2>
+          </div>
+        </div>
+        <ul className="amenity-row">
+          <li>Tự nhận phòng</li>
+          <li>Mã cửa riêng</li>
+          <li>Giường đôi</li>
+          <li>Wi-Fi</li>
+          <li>Máy chiếu</li>
+          <li>Bồn tắm</li>
+          <li>Chỗ để xe</li>
+        </ul>
+        <div className="reason-grid">
+          <article className="reason">
+            <KeyRound size={20} />
+            <h3>Tự nhận phòng bằng mã riêng</h3>
+            <p>Mã cổng và mã phòng chỉ dùng cho lần đặt của bạn. Đến nơi, nhập mã và vào phòng.</p>
+          </article>
+          <article className="reason">
+            <Clock size={20} />
+            <h3>Giờ nhận, giờ trả do bạn chọn</h3>
+            <p>Chọn ngày, giờ đến và giờ về. Phòng được giữ 5 phút để bạn thanh toán.</p>
+          </article>
+          <article className="reason">
+            <Sparkles size={20} />
+            <h3>Đủ tiện nghi cho khoảng nghỉ</h3>
+            <p>Giường, Wi-Fi, máy chiếu hoặc bồn tắm tùy cơ sở. Mỗi phòng ghi rõ những gì đã có sẵn.</p>
+          </article>
+          <article className="reason">
+            <ShieldCheck size={20} />
+            <h3>Riêng tư khi muốn, hỗ trợ khi cần</h3>
+            <p>Bạn tự vào phòng. Khi cần đổi giờ, thanh toán hoặc mã cửa, Kabin hỗ trợ qua trang trợ giúp.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="cta-band">
+        <div>
+          <p className="kicker">Đặt phòng</p>
+          <h2>Sẵn sàng cho một khoảng nghỉ?</h2>
+          <p>Chọn cơ sở và khung giờ. Thanh toán xong, mã cửa được gửi trước khi bạn đến.</p>
         </div>
         <div className="steps-grid">
           <Step n="01" title="Chọn phòng" text="Chọn phòng và thời gian phù hợp." />
           <Step n="02" title="Thanh toán" text="Phòng được giữ 5 phút để thanh toán." />
           <Step n="03" title="Nhận mã vào phòng" text="Xác nhận thành công, nhận mã cổng và phòng." />
         </div>
-        <p className="hint">Thông tin đặt phòng được gửi qua SMS và email.</p>
+        <div className="cta-foot">
+          <p className="hint">Thông tin đặt phòng được gửi qua SMS và email.</p>
+          <div className="cta-actions">
+            <button type="button" className="btn btn-primary" onClick={() => submit()}>
+              Xem phòng trống <ArrowRight size={16} />
+            </button>
+            <Link to="/huong-dan" className="btn btn-ghost">
+              Xem hướng dẫn nhận phòng
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   )

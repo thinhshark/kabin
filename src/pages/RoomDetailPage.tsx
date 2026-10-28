@@ -1,17 +1,24 @@
+import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { DURATIONS, getLocation, getRoom, TIMES } from '../data'
+import { DURATIONS, getLocation, getRoom } from '../data'
 import { useStore } from '../store'
+import { TimeField } from '../components/TimeField'
 import { Accordion, AmenityList, Crumb, Gallery, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isPastSlot, slotPrice } from '../utils'
+import { checkoutLabel, clockMinutes, formatDate, formatMoney, isPastSlot, slotPrice, stayHours, todayISO } from '../utils'
 
 export function RoomDetailPage() {
   const { id = '', roomId = '' } = useParams()
   const location = getLocation(id)
   const room = getRoom(roomId)
   useTitle(room ? `Phòng ${room.number}` : 'Phòng')
-  const { draft, setDraft } = useStore()
+  const { draft, setDraft, bookings } = useStore()
   const navigate = useNavigate()
+  const today = todayISO()
+
+  useEffect(() => {
+    if (draft.date < today) setDraft({ date: today })
+  }, [draft.date, setDraft, today])
 
   if (!location || !room || room.locationId !== location.id) {
     return (
@@ -22,17 +29,26 @@ export function RoomDetailPage() {
     )
   }
 
-  const end = checkoutLabel(draft.time, draft.duration)
+  const nextDay = clockMinutes(draft.checkoutTime) <= clockMinutes(draft.time)
   const past = isPastSlot(draft.date, draft.time)
+  const conflict =
+    !room.available ||
+    bookings.some(
+      (booking) =>
+        booking.roomId === room.id &&
+        (booking.status === 'upcoming' || booking.status === 'active' || booking.status === 'pending') &&
+        overlaps(draft.date, draft.time, draft.duration, booking),
+    )
   const price = slotPrice(room.price3h, draft.duration)
-  const blocked = !room.available || past
+  const stayLabel = hoursLabel(draft.duration)
+  const blocked = conflict || past
 
   return (
     <div className="wrap page">
       <Crumb
         items={[
           { label: 'Trang chủ', to: '/' },
-          { label: 'Cơ sở', to: '/co-so' },
+          { label: 'Hệ thống cơ sở', to: '/co-so' },
           { label: location.name, to: `/co-so/${location.id}` },
           { label: `Phòng ${room.number}` },
         ]}
@@ -44,7 +60,11 @@ export function RoomDetailPage() {
           </h1>
           <p className="meta-line">
             {location.name} · {location.city}
-            {room.available ? <span className="pill pill-upcoming">Còn trống trong khung giờ đã chọn</span> : <span className="pill pill-expired">Không khả dụng trong khung giờ này</span>}
+            {conflict ? (
+              <span className="pill pill-expired">Không khả dụng</span>
+            ) : (
+              <span className="pill pill-upcoming">Còn trống trong khung giờ đã chọn</span>
+            )}
           </p>
         </div>
         <Link to={`/co-so/${location.id}/chon-phong`} className="text-btn">
@@ -57,10 +77,19 @@ export function RoomDetailPage() {
         <aside className="book-widget">
           <h2>Thông tin đặt phòng</h2>
           <label className="field">
-            Ngày nhận phòng
+            Chọn ngày
             <span className="control">
               <Calendar size={16} />
-              <input type="date" value={draft.date} onChange={(event) => setDraft({ date: event.target.value })} />
+              <input
+                type="date"
+                min={today}
+                value={draft.date < today ? today : draft.date}
+                onChange={(event) => {
+                  const date = event.target.value
+                  if (date && date < today) return
+                  setDraft({ date })
+                }}
+              />
             </span>
           </label>
           <div className="split-2">
@@ -68,35 +97,56 @@ export function RoomDetailPage() {
               Giờ nhận phòng
               <span className="control">
                 <Clock size={16} />
-                <select value={draft.time} onChange={(event) => setDraft({ time: event.target.value })}>
-                  {TIMES.map((time) => (
-                    <option key={time}>{time}</option>
-                  ))}
-                </select>
+                <TimeField
+                  hideLabel
+                  label="Giờ nhận phòng"
+                  value={draft.time}
+                  onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+                />
               </span>
             </label>
             <label className="field">
-              Thời lượng
+              Giờ trả phòng
               <span className="control">
-                <Hourglass size={16} />
-                <select value={draft.duration} onChange={(event) => setDraft({ duration: Number(event.target.value) })}>
-                  {DURATIONS.map((hours) => (
-                    <option key={hours} value={hours}>
-                      {hours} giờ
-                    </option>
-                  ))}
-                </select>
+                <Clock size={16} />
+                <TimeField
+                  hideLabel
+                  label="Giờ trả phòng"
+                  value={draft.checkoutTime}
+                  align="end"
+                  onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+                />
               </span>
             </label>
           </div>
-          <p className="hint">Trả phòng lúc {end.text}</p>
+          <label className="field">
+            Thời lượng
+            <span className="control">
+              <Hourglass size={16} />
+              <select
+                value={draft.duration}
+                onChange={(event) => {
+                  const duration = Number(event.target.value)
+                  setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
+                }}
+              >
+                {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
+                  <option key={hours} value={hours}>
+                    {hoursLabel(hours)}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+          <p className="hint">Trả phòng lúc {draft.checkoutTime}{nextDay ? ' hôm sau' : ''}</p>
           <div className="sum-row total">
             <span>Tổng tiền</span>
             <b className="price">
-              {formatMoney(price)} <small>/ {draft.duration} giờ</small>
+              {formatMoney(price)} <small>/ {stayLabel}</small>
             </b>
           </div>
           {past ? <p className="form-error">Khung giờ này đã qua.</p> : null}
+          {!past && conflict ? <p className="form-error">khung giờ này hiện không khả dụng</p> : null}
           <button
             type="button"
             className="btn btn-primary btn-block"
@@ -138,4 +188,27 @@ export function RoomDetailPage() {
       </div>
     </div>
   )
+}
+
+function overlaps(
+  date: string,
+  time: string,
+  hours: number,
+  booking: { date: string; time: string; duration: number },
+) {
+  const startOf = (day: string, clock: string) => new Date(`${day}T00:00:00`).getTime() + clockMinutes(clock) * 60000
+  const start = startOf(date, time)
+  const end = start + hours * 3600000
+  const bookedStart = startOf(booking.date, booking.time)
+  const bookedEnd = bookedStart + booking.duration * 3600000
+  return start < bookedEnd && bookedStart < end
+}
+
+function hoursLabel(hours: number) {
+  const minutes = Math.round(hours * 60)
+  const whole = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (!rest) return `${whole} giờ`
+  if (!whole) return `${rest} phút`
+  return `${whole} giờ ${rest} phút`
 }
