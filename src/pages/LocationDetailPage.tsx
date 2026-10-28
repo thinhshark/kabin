@@ -1,9 +1,12 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
-import { DURATIONS, getLocation, roomsAt, TIMES } from '../data'
+import { getLocation, roomsAt, TIMES } from '../data'
 import { useStore } from '../store'
+import { DateField } from '../components/DateField'
+import { DurationSelect } from '../components/DurationSelect'
+import { TimeField } from '../components/TimeField'
 import { Accordion, AmenityList, Crumb, Gallery, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isPastSlot, mapsUrl } from '../utils'
+import { checkoutLabel, formatDate, formatMoney, isPastSlot, mapsUrl, overnightStay, stayHours, todayISO } from '../utils'
 
 export function LocationDetailPage() {
   const { id = '' } = useParams()
@@ -53,7 +56,12 @@ export function LocationDetailPage() {
             Ngày nhận phòng
             <span className="control">
               <Calendar size={16} />
-              <input type="date" value={draft.date} onChange={(event) => setDraft({ date: event.target.value, locationId: location.id })} />
+              <DateField
+                hideLabel
+                label="Ngày nhận phòng"
+                value={draft.date < todayISO() ? todayISO() : draft.date}
+                onChange={(date) => setDraft({ date, locationId: location.id })}
+              />
             </span>
           </label>
           <div className="split-2">
@@ -65,7 +73,11 @@ export function LocationDetailPage() {
                   value={draft.time}
                   onChange={(event) => {
                     const time = event.target.value
-                    setDraft({ time, locationId: location.id, checkoutTime: checkoutLabel(time, draft.duration).time })
+                    setDraft(
+                      draft.overnight
+                        ? { time, locationId: location.id, ...overnightStay(time) }
+                        : { time, locationId: location.id, checkoutTime: checkoutLabel(time, draft.duration).time },
+                    )
                   }}
                 >
                   {(TIMES.includes(draft.time) ? TIMES : [draft.time, ...TIMES]).map((time) => (
@@ -78,26 +90,34 @@ export function LocationDetailPage() {
               Thời lượng
               <span className="control">
                 <Hourglass size={16} />
-                <select
-                  value={draft.duration}
-                  onChange={(event) => {
-                    const duration = Number(event.target.value)
-                    setDraft({
-                      duration,
-                      locationId: location.id,
-                      checkoutTime: checkoutLabel(draft.time, duration).time,
-                    })
-                  }}
-                >
-                  {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
-                    <option key={hours} value={hours}>
-                      {hours} giờ
-                    </option>
-                  ))}
-                </select>
+                <DurationSelect
+                  time={draft.time}
+                  duration={draft.duration}
+                  overnight={draft.overnight}
+                  onChange={(next) => setDraft({ ...next, locationId: location.id })}
+                />
               </span>
             </label>
           </div>
+          <label className="field">
+            Giờ trả phòng
+            <span className="control">
+              <Clock size={16} />
+              <TimeField
+                hideLabel
+                label="Giờ trả phòng"
+                value={draft.checkoutTime}
+                onChange={(checkoutTime) =>
+                  setDraft({
+                    locationId: location.id,
+                    overnight: false,
+                    checkoutTime,
+                    duration: stayHours(draft.time, checkoutTime),
+                  })
+                }
+              />
+            </span>
+          </label>
           <p className="hint">Trả phòng lúc {end.text}</p>
           {past ? <p className="form-error">Khung giờ này đã qua. Hãy chọn giờ khác.</p> : null}
           <button

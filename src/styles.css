@@ -311,6 +311,19 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .time-col button.on { background: var(--brand-soft); color: var(--brand); }
 .time-col button:disabled { color: #c9c1b8; }
+.date-pop {
+  position: absolute; top: calc(100% + 12px); left: 0; z-index: 20; width: 280px;
+  padding: 12px; background: white; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+}
+.date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.date-nav button { border: 0; background: transparent; width: 32px; height: 32px; border-radius: 8px; color: var(--ink); }
+.date-nav button:disabled { color: #c9c1b8; }
+.date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.date-grid span { color: var(--muted); font-size: 11px; font-weight: 650; padding: 4px 0; }
+.date-grid button { border: 0; background: transparent; border-radius: 8px; min-height: 32px; font-weight: 650; color: var(--ink); }
+.date-grid button.on { background: var(--brand); color: white; }
+.date-grid button:disabled { color: #c9c1b8; }
+.open-count { color: var(--brand); }
 .section { margin: 42px 0; }
 .section-head p { color: var(--muted); }
 .cards-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -683,10 +696,11 @@ ul { margin: 0; padding: 0; list-style: none; }
   .login-card { margin-top: 8px; }
   .hero { height: 340px; border-radius: 20px; }
   .hero-copy { left: 18px; right: 18px; top: 28px; }
-  .search-card { position: relative; z-index: 2; margin: -36px 0 20px; }
+  .search-card { position: relative; z-index: 2; top: -36px; margin: 0 0 20px; }
   .search-head, .section-head, .catalog-bar {
-    flex-direction: column; align-items: flex-start;
+    flex-direction: column; align-items: stretch;
   }
+  .section-head h2 { text-wrap: balance; line-height: 1.2; }
   .section-head .text-btn, .catalog-bar > strong, .seg button, .search-row > .btn { white-space: nowrap; }
   .search-grid { grid-template-columns: 1fr 1fr; }
   .search-grid > label.control { grid-column: 1 / -1; }

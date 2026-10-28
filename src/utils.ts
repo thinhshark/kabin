@@ -44,6 +44,16 @@ export function stayHours(start: string, end: string) {
   return diff / 60
 }
 
+export const OVERNIGHT_CHECKOUT = '09:00'
+
+export function overnightStay(start: string) {
+  return {
+    overnight: true,
+    checkoutTime: OVERNIGHT_CHECKOUT,
+    duration: stayHours(start, OVERNIGHT_CHECKOUT),
+  }
+}
+
 export function checkoutLabel(time: string, duration: number) {
   const total = clockMinutes(time) + duration * 60
   const mins = ((total % (24 * 60)) + 24 * 60) % (24 * 60)

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin } from 'lucide-react'
-import { DURATIONS, FILTER_AMENITIES, getLocation, ROOMS, roomsAt, type Amenity, type Room } from '../data'
+import { FILTER_AMENITIES, getLocation, ROOMS, roomsAt, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
+import { DateField } from '../components/DateField'
+import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { AmenityIcon, Crumb, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, cx, formatMoney, isPastSlot, slotPrice, stayHours, todayISO } from '../utils'
+import { checkoutLabel, cx, formatMoney, isPastSlot, overnightStay, slotPrice, stayHours, todayISO } from '../utils'
 
 export function SelectRoomPage() {
   const { id = '' } = useParams()
@@ -26,7 +28,7 @@ export function SelectRoomPage() {
 
   const end = checkoutLabel(draft.time, draft.duration)
   const past = isPastSlot(draft.date, draft.time)
-  const stayLabel = hoursLabel(draft.duration)
+  const stayLabel = draft.overnight ? 'Qua đêm' : hoursLabel(draft.duration)
 
   const { here, elsewhere } = useMemo(() => {
     if (!location) return { here: [] as Room[], elsewhere: [] as Room[] }
@@ -101,16 +103,7 @@ export function SelectRoomPage() {
           <Calendar size={18} />
           <span>
             <span className="control-label">Chọn ngày</span>
-            <input
-              type="date"
-              min={today}
-              value={draft.date < today ? today : draft.date}
-              onChange={(event) => {
-                const date = event.target.value
-                if (date && date < today) return
-                setDraft({ date })
-              }}
-            />
+            <DateField hideLabel label="Chọn ngày" value={draft.date < today ? today : draft.date} onChange={(date) => setDraft({ date })} />
           </span>
         </label>
         <div className="control">
@@ -118,26 +111,21 @@ export function SelectRoomPage() {
           <TimeField
             label="Giờ nhận phòng"
             value={draft.time}
-            onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+            onChange={(time) =>
+              setDraft(draft.overnight ? { time, ...overnightStay(time) } : { time, duration: stayHours(time, draft.checkoutTime) })
+            }
           />
         </div>
         <label className="control">
           <Hourglass size={18} />
           <span>
             <span className="control-label">Thời lượng</span>
-            <select
-              value={draft.duration}
-              onChange={(event) => {
-                const duration = Number(event.target.value)
-                setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
-              }}
-            >
-              {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
-                <option key={hours} value={hours}>
-                  {hours} giờ
-                </option>
-              ))}
-            </select>
+            <DurationSelect
+              time={draft.time}
+              duration={draft.duration}
+              overnight={draft.overnight}
+              onChange={(next) => setDraft(next)}
+            />
           </span>
         </label>
         <div className="control">
@@ -146,7 +134,9 @@ export function SelectRoomPage() {
             label="Giờ trả phòng"
             value={draft.checkoutTime}
             align="end"
-            onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+            onChange={(checkoutTime) =>
+              setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
+            }
           />
         </div>
         <button className="btn btn-primary" type="submit">
@@ -185,7 +175,8 @@ export function SelectRoomPage() {
         <div>
           <div className="catalog-bar">
             <strong>
-              {openCount} phòng còn trống <span>{draft.time}–{draft.checkoutTime}{end.nextDay ? ' hôm sau' : ''} · {stayLabel}</span>
+              <span className="open-count">{openCount} phòng còn trống</span>{' '}
+              <span>{draft.time}–{draft.checkoutTime}{end.nextDay ? ' hôm sau' : ''} · {stayLabel}</span>
             </strong>
             <label>
               Sắp xếp theo

@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { DURATIONS, getLocation, getRoom } from '../data'
+import { getLocation, getRoom } from '../data'
 import { useStore } from '../store'
+import { DateField } from '../components/DateField'
+import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { Accordion, AmenityList, Crumb, Gallery, useTitle } from '../components/ui'
-import { checkoutLabel, clockMinutes, formatDate, formatMoney, isPastSlot, slotPrice, stayHours, todayISO } from '../utils'
+import { clockMinutes, formatDate, formatMoney, isPastSlot, overnightStay, slotPrice, stayHours, todayISO } from '../utils'
 
 export function RoomDetailPage() {
   const { id = '', roomId = '' } = useParams()
@@ -40,7 +42,7 @@ export function RoomDetailPage() {
         overlaps(draft.date, draft.time, draft.duration, booking),
     )
   const price = slotPrice(room.price3h, draft.duration)
-  const stayLabel = hoursLabel(draft.duration)
+  const stayLabel = draft.overnight ? 'Qua đêm' : hoursLabel(draft.duration)
   const blocked = conflict || past
 
   return (
@@ -80,16 +82,7 @@ export function RoomDetailPage() {
             Chọn ngày
             <span className="control">
               <Calendar size={16} />
-              <input
-                type="date"
-                min={today}
-                value={draft.date < today ? today : draft.date}
-                onChange={(event) => {
-                  const date = event.target.value
-                  if (date && date < today) return
-                  setDraft({ date })
-                }}
-              />
+              <DateField hideLabel label="Chọn ngày" value={draft.date < today ? today : draft.date} onChange={(date) => setDraft({ date })} />
             </span>
           </label>
           <div className="split-2">
@@ -101,7 +94,9 @@ export function RoomDetailPage() {
                   hideLabel
                   label="Giờ nhận phòng"
                   value={draft.time}
-                  onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+                  onChange={(time) =>
+                    setDraft(draft.overnight ? { time, ...overnightStay(time) } : { time, duration: stayHours(time, draft.checkoutTime) })
+                  }
                 />
               </span>
             </label>
@@ -109,19 +104,12 @@ export function RoomDetailPage() {
               Thời lượng
               <span className="control">
                 <Hourglass size={16} />
-                <select
-                  value={draft.duration}
-                  onChange={(event) => {
-                    const duration = Number(event.target.value)
-                    setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
-                  }}
-                >
-                  {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
-                    <option key={hours} value={hours}>
-                      {hoursLabel(hours)}
-                    </option>
-                  ))}
-                </select>
+              <DurationSelect
+                time={draft.time}
+                duration={draft.duration}
+                overnight={draft.overnight}
+                onChange={(next) => setDraft(next)}
+              />
               </span>
             </label>
           </div>
@@ -133,7 +121,9 @@ export function RoomDetailPage() {
                 hideLabel
                 label="Giờ trả phòng"
                 value={draft.checkoutTime}
-                onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+                onChange={(checkoutTime) =>
+                  setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
+                }
               />
             </span>
           </label>

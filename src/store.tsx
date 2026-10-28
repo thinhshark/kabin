@@ -17,6 +17,7 @@ export type Draft = {
   time: string
   checkoutTime: string
   duration: number
+  overnight: boolean
   name: string
   phone: string
   phoneVerified: boolean
@@ -57,6 +58,7 @@ function emptyDraft(): Draft {
     time: '14:00',
     checkoutTime: '17:00',
     duration: 3,
+    overnight: false,
     name: '',
     phone: '',
     phoneVerified: false,

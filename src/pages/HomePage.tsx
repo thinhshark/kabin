@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import { LOCATIONS, PHOTOS, ROOM_TYPES } from '../data'
 import { useStore } from '../store'
+import { DateField } from '../components/DateField'
 import { TimeField } from '../components/TimeField'
 import { LogoMark, useTitle } from '../components/ui'
-import { formatMoney, stayHours, todayISO } from '../utils'
+import { formatMoney, overnightStay, stayHours, todayISO } from '../utils'
 
 export function HomePage() {
   useTitle('Kabin')
@@ -70,7 +71,12 @@ export function HomePage() {
               <Calendar size={18} />
               <span>
                 <span className="control-label">Ngày nhận phòng</span>
-                <input type="date" value={draft.date} min={todayISO()} onChange={(event) => setDraft({ date: event.target.value })} />
+                <DateField
+                  hideLabel
+                  label="Ngày nhận phòng"
+                  value={draft.date < todayISO() ? todayISO() : draft.date}
+                  onChange={(date) => setDraft({ date })}
+                />
               </span>
             </label>
             <div className="control">
@@ -78,7 +84,13 @@ export function HomePage() {
               <TimeField
                 label="Giờ nhận phòng"
                 value={draft.time}
-                onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
+                onChange={(time) =>
+                  setDraft(
+                    draft.overnight
+                      ? { time, ...overnightStay(time) }
+                      : { time, duration: stayHours(time, draft.checkoutTime) },
+                  )
+                }
               />
             </div>
             <div className="control">
@@ -87,7 +99,9 @@ export function HomePage() {
                 label="Giờ trả phòng"
                 value={draft.checkoutTime}
                 align="end"
-                onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+                onChange={(checkoutTime) =>
+                  setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
+                }
               />
             </div>
             <button className="btn btn-primary" type="submit">
