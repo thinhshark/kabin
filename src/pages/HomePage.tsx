@@ -114,6 +114,7 @@ export function HomePage() {
       <section className="section">
         <div className="section-head">
           <div>
+            <p className="kicker">Hạng phòng</p>
             <h2>Chọn một khoảng riêng cho bạn</h2>
             <p>Không gian thoải mái cho những giờ nghỉ ngơi.</p>
           </div>
@@ -127,7 +128,7 @@ export function HomePage() {
               <img src={room.photo} alt={`Phòng ${room.type}`} />
               <div>
                 <h3>Phòng {room.type}</h3>
-                <p>{room.amenities}</p>
+                {room.amenities ? <p>{room.amenities}</p> : null}
                 <div className="room-card-foot">
                   <span>
                     Từ <PriceInline value={room.priceFrom} />
@@ -281,11 +282,9 @@ export function HomePage() {
         <ul className="amenity-row">
           <li>Tự nhận phòng</li>
           <li>Mã cửa riêng</li>
-          <li>Giường đôi</li>
-          <li>Wi-Fi</li>
           <li>Máy chiếu</li>
           <li>Bồn tắm</li>
-          <li>Chỗ để xe</li>
+          <li>Chỗ để oto</li>
         </ul>
         <div className="reason-grid">
           <article className="reason">
@@ -296,12 +295,12 @@ export function HomePage() {
           <article className="reason">
             <Clock size={20} />
             <h3>Giờ nhận, giờ trả do bạn chọn</h3>
-            <p>Chọn ngày, giờ đến và giờ về. Phòng được giữ 5 phút để bạn thanh toán.</p>
+            <p>Chọn ngày, giờ đến và giờ về. Phòng được giữ 10 phút để bạn thanh toán.</p>
           </article>
           <article className="reason">
             <Sparkles size={20} />
             <h3>Đủ tiện nghi cho khoảng nghỉ</h3>
-            <p>Giường, Wi-Fi, máy chiếu hoặc bồn tắm tùy cơ sở. Mỗi phòng ghi rõ những gì đã có sẵn.</p>
+            <p>Máy chiếu, bồn tắm hoặc tiện ích khác tùy cơ sở. Mỗi phòng ghi rõ những gì đã có sẵn.</p>
           </article>
           <article className="reason">
             <ShieldCheck size={20} />
@@ -319,7 +318,7 @@ export function HomePage() {
         </div>
         <div className="steps-grid">
           <Step n="01" title="Chọn phòng" text="Chọn phòng và thời gian phù hợp." />
-          <Step n="02" title="Thanh toán" text="Phòng được giữ 5 phút để thanh toán." />
+          <Step n="02" title="Thanh toán" text="Phòng được giữ 10 phút để thanh toán." />
           <Step n="03" title="Nhận mã vào phòng" text="Xác nhận thành công, nhận mã cổng và phòng." />
         </div>
         <div className="cta-foot">

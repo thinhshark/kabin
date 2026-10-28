@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { getLocation, getRoom } from '../data'
+import { getLocation, getRoom, roomAmenities } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -68,25 +68,25 @@ export function RoomDetailPage() {
               <span className="pill pill-upcoming">Còn trống trong khung giờ đã chọn</span>
             )}
           </p>
+          <Link to={`/co-so/${location.id}/chon-phong`} className="text-btn room-switch">
+            <ArrowLeft size={16} /> Chọn phòng khác
+          </Link>
         </div>
-        <Link to={`/co-so/${location.id}/chon-phong`} className="text-btn">
-          <ArrowLeft size={16} /> Chọn phòng khác
-        </Link>
       </div>
 
       <div className="detail room-detail">
         <Gallery photos={room.photos} alt={`Phòng ${room.number}`} />
         <aside className="book-widget">
           <h2>Thông tin đặt phòng</h2>
-          <label className="field">
-            Chọn ngày
-            <span className="control">
-              <Calendar size={16} />
-              <DateField hideLabel label="Chọn ngày" value={draft.date < today ? today : draft.date} onChange={(date) => setDraft({ date })} />
-            </span>
-          </label>
           <div className="split-2">
             <label className="field">
+              Chọn ngày
+              <span className="control">
+                <Calendar size={16} />
+                <DateField hideLabel label="Chọn ngày" value={draft.date < today ? today : draft.date} onChange={(date) => setDraft({ date })} />
+              </span>
+            </label>
+            <label className="field field-brand">
               Giờ nhận phòng
               <span className="control">
                 <Clock size={16} />
@@ -100,33 +100,36 @@ export function RoomDetailPage() {
                 />
               </span>
             </label>
-            <label className="field">
+          </div>
+          <div className="split-2">
+            <label className="field field-ink">
               Thời lượng
               <span className="control">
                 <Hourglass size={16} />
-              <DurationSelect
-                time={draft.time}
-                duration={draft.duration}
-                overnight={draft.overnight}
-                onChange={(next) => setDraft(next)}
-              />
+                <DurationSelect
+                  time={draft.time}
+                  duration={draft.duration}
+                  overnight={draft.overnight}
+                  onChange={(next) => setDraft(next)}
+                />
+              </span>
+            </label>
+            <label className="field field-brand">
+              Giờ trả phòng
+              <span className="control">
+                <Clock size={16} />
+                <TimeField
+                  hideLabel
+                  label="Giờ trả phòng"
+                  value={draft.checkoutTime}
+                  align="end"
+                  onChange={(checkoutTime) =>
+                    setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
+                  }
+                />
               </span>
             </label>
           </div>
-          <label className="field">
-            Giờ trả phòng
-            <span className="control">
-              <Clock size={16} />
-              <TimeField
-                hideLabel
-                label="Giờ trả phòng"
-                value={draft.checkoutTime}
-                onChange={(checkoutTime) =>
-                  setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
-                }
-              />
-            </span>
-          </label>
           <p className="hint">Trả phòng lúc {draft.checkoutTime}{nextDay ? ' hôm sau' : ''}</p>
           <div className="sum-row total">
             <span>Tổng tiền</span>
@@ -152,14 +155,14 @@ export function RoomDetailPage() {
         <div className="detail-copy">
           <h2>Một căn phòng ấm cúng cho khoảng nghỉ riêng tư của bạn.</h2>
           <p>{room.description}</p>
-          <AmenityList items={room.amenities} />
+          <AmenityList items={roomAmenities(room)} />
           <Accordion
             items={[
               {
                 title: 'Tiện ích trong phòng',
                 content: (
                   <p>
-                    {room.amenities.join(', ')}. Giá {formatMoney(price)} cho {draft.duration} giờ, ngày {formatDate(draft.date)}.
+                    {roomAmenities(room).join(', ')}. Giá {formatMoney(price)} cho {draft.duration} giờ, ngày {formatDate(draft.date)}.
                   </p>
                 ),
               },
@@ -169,7 +172,7 @@ export function RoomDetailPage() {
               },
               {
                 title: 'Chính sách đặt phòng',
-                content: <p>Giữ phòng 5 phút. Hết hạn chưa nhận tiền thì phòng mở lại. Tiền đến muộn được hỗ trợ xử lý riêng.</p>,
+                content: <p>Giữ phòng 10 phút. Hết hạn chưa nhận tiền thì phòng mở lại. Tiền đến muộn được hỗ trợ xử lý riêng.</p>,
               },
             ]}
           />

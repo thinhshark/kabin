@@ -98,7 +98,7 @@ export function ReviewPage() {
               <input
                 value={draft.name}
                 onChange={(event) => setDraft({ name: event.target.value })}
-                placeholder="Nguyễn Minh Anh"
+                placeholder="Nguyễn Văn A"
               />
               {errors.name ? <span className="form-error">{errors.name}</span> : null}
             </label>
@@ -185,7 +185,7 @@ export function ReviewPage() {
             Giữ phòng & thanh toán <ArrowRight size={16} />
           </button>
           <p className="hint lock-hint mobile-pay">
-            <Lock size={14} /> Phòng được giữ trong 5 phút để bạn hoàn tất thanh toán.
+            <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
           </p>
         </form>
 
@@ -224,7 +224,7 @@ export function ReviewPage() {
               Giữ phòng & thanh toán <ArrowRight size={16} />
             </button>
             <p className="hint lock-hint desktop-pay">
-              <Lock size={14} /> Phòng được giữ trong 5 phút để bạn hoàn tất thanh toán.
+              <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
             </p>
           </article>
         </aside>

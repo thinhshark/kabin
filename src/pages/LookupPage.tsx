@@ -233,7 +233,7 @@ function LookupStay({ booking }: { booking: Booking }) {
         </ol>
         <p className="hint">Mật khẩu Wi-Fi dán ở mặt trong cửa. Đến giờ trả phòng, quý khách vui lòng tắt điều hòa, đóng cửa trước khi rời phòng.</p>
         <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>18002230</strong>
+          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>1800.2230</strong>
         </a>
       </section>
     </article>

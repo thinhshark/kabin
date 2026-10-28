@@ -266,7 +266,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDraftState((current) => ({
         ...current,
         phase: 'holding',
-        holdUntil: Date.now() + 5 * 60 * 1000,
+        holdUntil: Date.now() + 10 * 60 * 1000,
         bookingCode: current.bookingCode || codeFrom(current.date),
         paymentRef: current.paymentRef || paymentRef(),
         gateCode: current.gateCode || doorCode(),

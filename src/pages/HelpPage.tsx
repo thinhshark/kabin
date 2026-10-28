@@ -16,7 +16,6 @@ export function HelpPage() {
   const [topic, setTopic] = useState<(typeof TOPICS)[number]>(initialTopic)
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<string | null>(FAQS[0]?.id ?? null)
-  const [chat, setChat] = useState(false)
   const [sent, setSent] = useState(false)
   const [form, setForm] = useState<{ code: string; phone: string; topic: string; message: string }>({
     code: '',
@@ -71,12 +70,12 @@ export function HelpPage() {
         <aside>
           <section className="panel">
             <h2>Liên hệ Kabin</h2>
-            <div className="btn-row">
-              <button type="button" className="btn btn-primary" onClick={() => setChat(true)}>
-                <MessageCircle size={16} /> Chat với Kabin
-              </button>
-              <a className="btn btn-line" href="tel:19001234">
-                <Phone size={16} /> Gọi hỗ trợ
+            <div className="btn-row contact-row">
+              <a className="btn btn-primary" href="https://www.facebook.com/tboxstay" target="_blank" rel="noreferrer">
+                <MessageCircle size={16} /> Nhắn Messenger
+              </a>
+              <a className="btn btn-line" href="tel:18002230">
+                <Phone size={16} /> Gọi 1800.2230
               </a>
             </div>
           </section>
@@ -121,49 +120,6 @@ export function HelpPage() {
           </section>
         </aside>
       </div>
-      {chat ? <Chat onClose={() => setChat(false)} /> : null}
-    </div>
-  )
-}
-
-function Chat({ onClose }: { onClose: () => void }) {
-  const [text, setText] = useState('')
-  const [lines, setLines] = useState<Array<{ from: 'kabin' | 'me'; text: string }>>([
-    { from: 'kabin', text: 'Kabin đây. Bạn cần hỗ trợ đặt phòng, thanh toán hay mã cửa?' },
-  ])
-  return (
-    <div className="chat">
-      <header>
-        <strong>Chat với Kabin</strong>
-        <button type="button" onClick={onClose} aria-label="Đóng">
-          ×
-        </button>
-      </header>
-      <div className="chat-log">
-        {lines.map((line, index) => (
-          <p key={index} className={line.from}>
-            {line.text}
-          </p>
-        ))}
-      </div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          const value = text.trim()
-          if (!value) return
-          setLines((current) => [
-            ...current,
-            { from: 'me', text: value },
-            { from: 'kabin', text: 'Mình đã ghi nhận. Nếu cần người trực, hãy gửi yêu cầu hỗ trợ kèm số điện thoại.' },
-          ])
-          setText('')
-        }}
-      >
-        <input value={text} onChange={(event) => setText(event.target.value)} placeholder="Nhập tin nhắn" />
-        <button className="btn btn-primary" type="submit">
-          Gửi
-        </button>
-      </form>
     </div>
   )
 }

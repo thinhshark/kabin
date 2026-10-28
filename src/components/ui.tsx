@@ -1,15 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
+  ArrowUpDown,
   Bath,
-  BedDouble,
   Car,
   ChevronDown,
   Copy,
-  Droplets,
-  Snowflake,
+  Dices,
+  Fence,
+  Gamepad2,
+  ShoppingBag,
   Tv,
-  Wifi,
+  Waves,
 } from 'lucide-react'
 import type { Amenity, BookingStatus } from '../data'
 import { statusLabel } from '../data'
@@ -75,18 +77,22 @@ export function AmenityIcon({ name }: { name: string }) {
   switch (name) {
     case 'Máy chiếu':
       return <Tv {...props} />
-    case 'Giường đôi':
-      return <BedDouble {...props} />
-    case 'Wi-Fi':
-      return <Wifi {...props} />
     case 'Bồn tắm':
       return <Bath {...props} />
-    case 'Chỗ để xe':
+    case 'Chỗ để oto':
       return <Car {...props} />
-    case 'Điều hòa':
-      return <Snowflake {...props} />
-    case 'Phòng tắm riêng':
-      return <Droplets {...props} />
+    case 'Thang máy':
+      return <ArrowUpDown {...props} />
+    case 'Mini mart':
+      return <ShoppingBag {...props} />
+    case 'View hồ':
+      return <Waves {...props} />
+    case 'Ban công':
+      return <Fence {...props} />
+    case 'Boardgame':
+      return <Dices {...props} />
+    case 'Playstation':
+      return <Gamepad2 {...props} />
     default:
       return null
   }

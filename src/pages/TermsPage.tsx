@@ -9,7 +9,7 @@ const SECTIONS = [
   },
   {
     title: 'Đặt phòng',
-    body: 'Khách chọn cơ sở, ngày, giờ nhận phòng và giờ trả phòng, rồi xác thực số điện thoại bằng OTP. Phòng được giữ 5 phút để thanh toán. Khi đặt phòng được xác nhận, thông tin và mã cửa được gửi qua SMS, email, và có thể xem lại ở trang Tra cứu đặt phòng.',
+    body: 'Khách chọn cơ sở, ngày, giờ nhận phòng và giờ trả phòng, rồi xác thực số điện thoại bằng OTP. Phòng được giữ 10 phút để thanh toán. Khi đặt phòng được xác nhận, thông tin và mã cửa được gửi qua SMS, email, và có thể xem lại ở trang Tra cứu đặt phòng.',
   },
   {
     title: 'Mã cửa',
@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     title: 'Đổi giờ và hỗ trợ',
-    body: 'Khi cần đổi giờ, thanh toán hoặc mã cửa không mở được, liên hệ tổng đài hỗ trợ 18002230 và đọc mã đặt phòng.',
+    body: 'Khi cần đổi giờ, thanh toán hoặc mã cửa không mở được, liên hệ tổng đài hỗ trợ 1800.2230 và đọc mã đặt phòng.',
   },
 ]
 
@@ -66,7 +66,7 @@ export function TermsPage() {
           ))}
         </ol>
         <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>18002230</strong>
+          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>1800.2230</strong>
         </a>
       </article>
     </div>

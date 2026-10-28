@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin } from 'lucide-react'
-import { FILTER_AMENITIES, getLocation, ROOMS, roomsAt, type Amenity, type Room } from '../data'
+import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin, SlidersHorizontal } from 'lucide-react'
+import { FILTER_AMENITIES, getLocation, LOCATIONS, ROOMS, roomAmenities, roomsAt, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -18,8 +18,9 @@ export function SelectRoomPage() {
   const [params, setParams] = useSearchParams()
   const typeFilter = params.get('loai') ?? ''
   const [amenities, setAmenities] = useState<Amenity[]>([])
+  const [openFilters, setOpenFilters] = useState(false)
   const [onlyOpen, setOnlyOpen] = useState(false)
-  const [sort, setSort] = useState<'asc' | 'desc' | 'number'>('asc')
+  const [sort, setSort] = useState<'asc' | 'desc'>('asc')
 
   const today = todayISO()
   useEffect(() => {
@@ -35,11 +36,10 @@ export function SelectRoomPage() {
     const matches = (room: Room) => {
       if (typeFilter && room.type !== typeFilter) return false
       if (onlyOpen && !room.available) return false
-      return amenities.every((item) => room.amenities.includes(item))
+      return amenities.every((item) => roomAmenities(room).includes(item))
     }
     const byChoice = (a: Room, b: Room) => {
       if (sort === 'desc') return b.price3h - a.price3h
-      if (sort === 'number') return a.number.localeCompare(b.number, 'vi')
       return a.price3h - b.price3h
     }
     const hereRooms = roomsAt(location.id).filter(matches)
@@ -85,9 +85,25 @@ export function SelectRoomPage() {
               <MapPin size={16} />
               {location.name} · {location.city}
             </span>
-            <Link to="/co-so" className="change-place">
+            <label className="change-place">
               Đổi cơ sở
-            </Link>
+              <select
+                aria-label="Đổi cơ sở"
+                value={location.id}
+                onChange={(event) => {
+                  const next = event.target.value
+                  setDraft({ locationId: next, roomId: '' })
+                  const query = params.toString()
+                  navigate(`/co-so/${next}/chon-phong${query ? `?${query}` : ''}`)
+                }}
+              >
+                {LOCATIONS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
           </p>
         </div>
       </div>
@@ -139,16 +155,26 @@ export function SelectRoomPage() {
             }
           />
         </div>
-        <button className="btn btn-primary" type="submit">
-          Cập nhật
-        </button>
+        <div className="criteria-actions">
+          <button className="btn btn-primary" type="submit">
+            Cập nhật
+          </button>
+          <button type="button" className="btn btn-line filter-toggle" onClick={() => setOpenFilters(true)}>
+            <SlidersHorizontal size={16} /> Bộ lọc
+          </button>
+        </div>
       </form>
       {past ? <p className="form-error">Khung giờ này đã qua. Hãy chọn giờ khác trước khi đặt.</p> : null}
 
       <div className="catalog rooms">
-        <aside className="filters static">
-          <strong>Tiện ích</strong>
-          {FILTER_AMENITIES.concat(['Giường đôi', 'Wi-Fi']).map((item) => (
+        <aside className={cx('filters static', openFilters && 'open')}>
+          <div className="filters-head">
+            <strong>Tiện ích</strong>
+            <button type="button" className="text-btn mobile-only" onClick={() => setAmenities([])}>
+              Xóa lọc
+            </button>
+          </div>
+          {FILTER_AMENITIES.map((item) => (
             <label key={item} className="check">
               <input
                 type="checkbox"
@@ -171,7 +197,11 @@ export function SelectRoomPage() {
               Loại {typeFilter} ×
             </button>
           ) : null}
+          <button type="button" className="btn btn-primary btn-block mobile-only" onClick={() => setOpenFilters(false)}>
+            Xem {openCount} phòng
+          </button>
         </aside>
+        {openFilters ? <button type="button" className="backdrop" aria-label="Đóng bộ lọc" onClick={() => setOpenFilters(false)} /> : null}
         <div>
           <div className="catalog-bar">
             <strong>
@@ -183,7 +213,6 @@ export function SelectRoomPage() {
               <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
                 <option value="asc">Giá từ thấp đến cao</option>
                 <option value="desc">Giá từ cao đến thấp</option>
-                <option value="number">Số phòng</option>
               </select>
             </label>
           </div>
@@ -270,7 +299,7 @@ function RoomChoice({
           {place?.name} · Cách {place ? place.distance.toString().replace('.', ',') : ''} km
         </p>
         <p className="meta-line">
-          {room.amenities.slice(0, 3).map((item) => (
+          {roomAmenities(room).map((item) => (
             <span key={item}>
               <AmenityIcon name={item} /> {item}
             </span>

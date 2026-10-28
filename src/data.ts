@@ -2,12 +2,14 @@ import { asset, formatMoney, shiftISO, slotPrice, todayISO } from './utils'
 
 export type Amenity =
   | 'Máy chiếu'
-  | 'Giường đôi'
-  | 'Wi-Fi'
   | 'Bồn tắm'
-  | 'Chỗ để xe'
-  | 'Điều hòa'
-  | 'Phòng tắm riêng'
+  | 'Chỗ để oto'
+  | 'Thang máy'
+  | 'Mini mart'
+  | 'View hồ'
+  | 'Ban công'
+  | 'Boardgame'
+  | 'Playstation'
 
 export type Location = {
   id: string
@@ -105,7 +107,17 @@ export const PHOTOS = {
 export const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00']
 export const DURATIONS = [2, 3, 4, 5, 6]
 export const DISTRICTS = ['Cầu Giấy', 'Tây Hồ', 'Ba Đình', 'Đống Đa']
-export const FILTER_AMENITIES: Amenity[] = ['Máy chiếu', 'Bồn tắm', 'Chỗ để xe']
+export const FILTER_AMENITIES: Amenity[] = [
+  'Máy chiếu',
+  'Bồn tắm',
+  'Chỗ để oto',
+  'Thang máy',
+  'Mini mart',
+  'View hồ',
+  'Ban công',
+  'Boardgame',
+  'Playstation',
+]
 
 export const DEMO_PHONE = '0912345678'
 
@@ -116,7 +128,7 @@ export const LOCATIONS: Location[] = [
     district: 'Cầu Giấy',
     city: 'Hà Nội',
     distance: 2.2,
-    amenities: ['Máy chiếu', 'Giường đôi', 'Wi-Fi'],
+    amenities: ['Máy chiếu', 'Thang máy', 'Mini mart', 'Boardgame'],
     blurb: 'Một khoảng riêng giữa lòng Hà Nội',
     description:
       'Không gian ấm cúng, đầy đủ tiện nghi để nghỉ ngơi, xem phim và tận hưởng thời gian của bạn.',
@@ -129,7 +141,7 @@ export const LOCATIONS: Location[] = [
     district: 'Tây Hồ',
     city: 'Hà Nội',
     distance: 3.8,
-    amenities: ['Bồn tắm', 'Giường đôi', 'Wi-Fi'],
+    amenities: ['Bồn tắm', 'View hồ', 'Ban công', 'Playstation'],
     blurb: 'Đóng cửa lại là một khoảng nghỉ cạnh hồ',
     description:
       'Phòng rộng, ánh đèn ấm và bồn tắm cho những khung giờ cần chậm lại. Tự nhận phòng, không cần quầy lễ tân.',
@@ -142,7 +154,7 @@ export const LOCATIONS: Location[] = [
     district: 'Ba Đình',
     city: 'Hà Nội',
     distance: 4.6,
-    amenities: ['Máy chiếu', 'Giường đôi', 'Wi-Fi'],
+    amenities: ['Máy chiếu', 'Thang máy', 'Chỗ để oto', 'Playstation'],
     blurb: 'Yên giữa phố cũ',
     description:
       'Một căn phòng đủ ánh sáng và máy chiếu cho giấc ngắn hoặc một buổi tối riêng. Vào cửa bằng mã sau khi thanh toán.',
@@ -155,7 +167,7 @@ export const LOCATIONS: Location[] = [
     district: 'Đống Đa',
     city: 'Hà Nội',
     distance: 5.1,
-    amenities: ['Giường đôi', 'Chỗ để xe', 'Wi-Fi'],
+    amenities: ['Chỗ để oto', 'Mini mart', 'Ban công', 'Boardgame'],
     blurb: 'Gần trung tâm, có chỗ để xe',
     description:
       'Phù hợp nếu bạn cần nghỉ vài giờ giữa ngày. Có chỗ để xe và mã cửa gửi ngay khi booking được xác nhận.',
@@ -170,7 +182,7 @@ export const ROOMS: Room[] = [
     locationId: 'cau-giay',
     number: '201',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Điều hòa', 'Wi-Fi', 'Phòng tắm riêng'],
+    amenities: [],
     price3h: 199000,
     available: true,
     description:
@@ -182,7 +194,7 @@ export const ROOMS: Room[] = [
     locationId: 'cau-giay',
     number: '202',
     type: 'Cinema',
-    amenities: ['Máy chiếu', 'Giường đôi', 'Wi-Fi', 'Điều hòa'],
+    amenities: ['Máy chiếu'],
     price3h: 249000,
     available: true,
     description: 'Màn chiếu lớn, rèm dày và giường đôi cho một buổi xem phim không phải ra khỏi phòng.',
@@ -193,7 +205,7 @@ export const ROOMS: Room[] = [
     locationId: 'cau-giay',
     number: '203',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Wi-Fi', 'Điều hòa', 'Phòng tắm riêng'],
+    amenities: [],
     price3h: 199000,
     available: false,
     description: 'Phòng Cozy cùng tầng, hiện đã có khách trong khung giờ đang chọn.',
@@ -204,7 +216,7 @@ export const ROOMS: Room[] = [
     locationId: 'tay-ho',
     number: '301',
     type: 'Relax',
-    amenities: ['Bồn tắm', 'Giường đôi', 'Wi-Fi', 'Điều hòa', 'Phòng tắm riêng'],
+    amenities: ['Bồn tắm'],
     price3h: 299000,
     available: true,
     description: 'Bồn tắm, ánh đèn ấm và khoảng giường rộng cho những giờ cần thả lỏng.',
@@ -215,7 +227,7 @@ export const ROOMS: Room[] = [
     locationId: 'tay-ho',
     number: '302',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Wi-Fi', 'Điều hòa', 'Phòng tắm riêng'],
+    amenities: [],
     price3h: 249000,
     available: true,
     description: 'Phòng nhỏ, yên, nhìn về phía hồ. Phù hợp nghỉ trưa hoặc tối ngắn.',
@@ -226,7 +238,7 @@ export const ROOMS: Room[] = [
     locationId: 'ba-dinh',
     number: '101',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Wi-Fi', 'Điều hòa', 'Phòng tắm riêng'],
+    amenities: [],
     price3h: 229000,
     available: true,
     description: 'Phòng ấm, cách phố một lớp rèm. Tự nhận phòng bằng mã cổng và mã cửa.',
@@ -237,7 +249,7 @@ export const ROOMS: Room[] = [
     locationId: 'ba-dinh',
     number: '102',
     type: 'Cinema',
-    amenities: ['Máy chiếu', 'Giường đôi', 'Wi-Fi', 'Điều hòa'],
+    amenities: ['Máy chiếu'],
     price3h: 259000,
     available: true,
     description: 'Máy chiếu và âm thanh trong phòng, phù hợp một buổi tối riêng.',
@@ -248,7 +260,7 @@ export const ROOMS: Room[] = [
     locationId: 'dong-da',
     number: '401',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Wi-Fi', 'Điều hòa', 'Chỗ để xe'],
+    amenities: ['Chỗ để oto'],
     price3h: 199000,
     available: true,
     description: 'Phòng gọn, có chỗ để xe tại cơ sở. Nhận và trả phòng bằng mã, không cần lễ tân.',
@@ -259,18 +271,23 @@ export const ROOMS: Room[] = [
     locationId: 'dong-da',
     number: '402',
     type: 'Cozy',
-    amenities: ['Giường đôi', 'Wi-Fi', 'Điều hòa', 'Phòng tắm riêng'],
+    amenities: [],
     price3h: 199000,
     available: true,
-    description: 'Cùng mức giá Cozy, phòng tắm riêng và Wi-Fi ổn định.',
+    description: 'Cùng mức giá Cozy, đủ tiện ích của cơ sở.',
     photos: [PHOTOS.cozy, PHOTOS.bath, PHOTOS.corner],
   },
 ]
 
+export function roomAmenities(room: Room): Amenity[] {
+  const place = LOCATIONS.find((item) => item.id === room.locationId)
+  return [...new Set([...(place?.amenities ?? []), ...room.amenities])]
+}
+
 export const ROOM_TYPES: Array<{ type: Room['type']; priceFrom: number; amenities: string; photo: string }> = [
-  { type: 'Cozy', priceFrom: 199000, amenities: 'Giường đôi · Wi-Fi', photo: PHOTOS.cozy },
-  { type: 'Cinema', priceFrom: 249000, amenities: 'Máy chiếu · Giường đôi', photo: PHOTOS.cinema },
-  { type: 'Relax', priceFrom: 299000, amenities: 'Bồn tắm · Giường đôi', photo: PHOTOS.relax },
+  { type: 'Cozy', priceFrom: 199000, amenities: '', photo: PHOTOS.cozy },
+  { type: 'Cinema', priceFrom: 249000, amenities: 'Máy chiếu', photo: PHOTOS.cinema },
+  { type: 'Relax', priceFrom: 299000, amenities: 'Bồn tắm', photo: PHOTOS.relax },
 ]
 
 export const PROMOS: Promo[] = [

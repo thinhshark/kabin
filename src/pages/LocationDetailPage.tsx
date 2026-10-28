@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
-import { getLocation, roomsAt, TIMES } from '../data'
+import { getLocation, roomAmenities, roomsAt, TIMES } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -52,19 +52,19 @@ export function LocationDetailPage() {
         <Gallery photos={location.photos} alt={location.name} />
         <aside className="book-widget">
           <h2>Chọn thời gian nghỉ</h2>
-          <label className="field">
-            Ngày nhận phòng
-            <span className="control">
-              <Calendar size={16} />
-              <DateField
-                hideLabel
-                label="Ngày nhận phòng"
-                value={draft.date < todayISO() ? todayISO() : draft.date}
-                onChange={(date) => setDraft({ date, locationId: location.id })}
-              />
-            </span>
-          </label>
           <div className="split-2">
+            <label className="field">
+              Ngày nhận phòng
+              <span className="control">
+                <Calendar size={16} />
+                <DateField
+                  hideLabel
+                  label="Ngày nhận phòng"
+                  value={draft.date < todayISO() ? todayISO() : draft.date}
+                  onChange={(date) => setDraft({ date, locationId: location.id })}
+                />
+              </span>
+            </label>
             <label className="field">
               Giờ nhận phòng
               <span className="control">
@@ -86,7 +86,9 @@ export function LocationDetailPage() {
                 </select>
               </span>
             </label>
-            <label className="field">
+          </div>
+          <div className="split-2">
+            <label className="field field-ink">
               Thời lượng
               <span className="control">
                 <Hourglass size={16} />
@@ -98,26 +100,27 @@ export function LocationDetailPage() {
                 />
               </span>
             </label>
+            <label className="field field-brand">
+              Giờ trả phòng
+              <span className="control">
+                <Clock size={16} />
+                <TimeField
+                  hideLabel
+                  label="Giờ trả phòng"
+                  value={draft.checkoutTime}
+                  align="end"
+                  onChange={(checkoutTime) =>
+                    setDraft({
+                      locationId: location.id,
+                      overnight: false,
+                      checkoutTime,
+                      duration: stayHours(draft.time, checkoutTime),
+                    })
+                  }
+                />
+              </span>
+            </label>
           </div>
-          <label className="field">
-            Giờ trả phòng
-            <span className="control">
-              <Clock size={16} />
-              <TimeField
-                hideLabel
-                label="Giờ trả phòng"
-                value={draft.checkoutTime}
-                onChange={(checkoutTime) =>
-                  setDraft({
-                    locationId: location.id,
-                    overnight: false,
-                    checkoutTime,
-                    duration: stayHours(draft.time, checkoutTime),
-                  })
-                }
-              />
-            </span>
-          </label>
           <p className="hint">Trả phòng lúc {end.text}</p>
           {past ? <p className="form-error">Khung giờ này đã qua. Hãy chọn giờ khác.</p> : null}
           <button
@@ -131,14 +134,6 @@ export function LocationDetailPage() {
           >
             Xem phòng trống <ArrowRight size={16} />
           </button>
-          <ul className="quiet-list">
-            <li>
-              <Clock size={15} /> Giữ phòng 5 phút khi thanh toán
-            </li>
-            <li>
-              <Headphones size={15} /> Nhận mã cổng và phòng sau xác nhận
-            </li>
-          </ul>
           <div className="help-mini">
             <span>
               <Headphones size={16} /> Bạn cần hỗ trợ?
@@ -164,7 +159,7 @@ export function LocationDetailPage() {
                   <strong>
                     Phòng {room.number} · {room.type}
                   </strong>
-                  <p>{room.amenities.slice(0, 2).join(' · ')}</p>
+                  <p>{roomAmenities(room).join(' · ')}</p>
                   <span className="pill pill-upcoming">Còn trống</span>
                 </div>
                 <div className="mini-room-end">
@@ -186,7 +181,7 @@ export function LocationDetailPage() {
               },
               {
                 title: 'Chính sách đặt phòng',
-                content: <p>Phòng được giữ 5 phút để chuyển khoản. Hết giờ chưa nhận tiền, phòng được mở lại.</p>,
+                content: <p>Phòng được giữ 10 phút để chuyển khoản. Hết giờ chưa nhận tiền, phòng được mở lại.</p>,
               },
             ]}
           />
