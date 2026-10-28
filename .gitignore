@@ -2,3 +2,4 @@ node_modules
 dist
 _ui-review
 *.local
+.DS_Store
