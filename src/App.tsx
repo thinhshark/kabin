@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Shell } from './components/Shell'
 import { OtpModal } from './components/OtpModal'
 import { useStore } from './store'
@@ -14,7 +14,6 @@ import { ExpiredPage, LatePage } from './pages/PaymentStates'
 import { TicketPage } from './pages/TicketPage'
 import { GuidePage } from './pages/GuidePage'
 import { BookingsPage } from './pages/BookingsPage'
-import { LoginPage } from './pages/LoginPage'
 import { AccountPage } from './pages/AccountPage'
 import { PromosPage } from './pages/PromosPage'
 import { HelpPage } from './pages/HelpPage'
@@ -41,7 +40,7 @@ export default function App() {
     <>
       <ScrollTop />
       <Routes>
-        <Route path="/dang-nhap" element={<LoginPage />} />
+        <Route path="/dang-nhap" element={<Navigate to="/" replace />} />
         <Route element={<Shell />}>
           <Route index element={<HomePage />} />
           <Route path="co-so" element={<LocationsPage />} />

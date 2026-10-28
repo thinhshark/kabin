@@ -14,7 +14,7 @@ export function AccountPage() {
   const [nextPhone, setNextPhone] = useState('')
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
-  if (!user) return <Navigate to="/dang-nhap" replace state={{ from: '/tai-khoan' }} />
+  if (!user) return <Navigate to="/" replace />
 
   const save = () => {
     if (name.trim().length < 2) {

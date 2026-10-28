@@ -187,9 +187,6 @@ export function ReviewPage() {
           <p className="hint lock-hint mobile-pay">
             <Lock size={14} /> Phòng được giữ trong 5 phút để bạn hoàn tất thanh toán.
           </p>
-          <p className="hint center">
-            Đã có tài khoản? <Link to="/dang-nhap" state={{ from: '/dat-phong' }}>Đăng nhập</Link> (tùy chọn)
-          </p>
         </form>
 
         <aside className="side">

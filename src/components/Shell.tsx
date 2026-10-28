@@ -112,7 +112,7 @@ export function Shell() {
             <Home size={20} />
             Trang chủ
           </NavLink>
-          <NavLink to="/dat-phong-cua-toi" className={({ isActive }) => cx('tab', isActive && 'active')}>
+          <NavLink to="/tra-cuu" className={({ isActive }) => cx('tab', isActive && 'active')}>
             <CalendarDays size={20} />
             Đặt phòng của tôi
           </NavLink>

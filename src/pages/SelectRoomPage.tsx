@@ -121,15 +121,6 @@ export function SelectRoomPage() {
             onChange={(time) => setDraft({ time, duration: stayHours(time, draft.checkoutTime) })}
           />
         </div>
-        <div className="control">
-          <Clock size={18} />
-          <TimeField
-            label="Giờ trả phòng"
-            value={draft.checkoutTime}
-            align="end"
-            onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
-          />
-        </div>
         <label className="control">
           <Hourglass size={18} />
           <span>
@@ -149,6 +140,15 @@ export function SelectRoomPage() {
             </select>
           </span>
         </label>
+        <div className="control">
+          <Clock size={18} />
+          <TimeField
+            label="Giờ trả phòng"
+            value={draft.checkoutTime}
+            align="end"
+            onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+          />
+        </div>
         <button className="btn btn-primary" type="submit">
           Cập nhật
         </button>

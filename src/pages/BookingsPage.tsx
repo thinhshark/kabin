@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowRight, RefreshCw, Search } from 'lucide-react'
 import { displayStatus, getLocation, getRoom, type BookingStatus } from '../data'
 import { useStore } from '../store'
@@ -19,7 +19,21 @@ export function BookingsPage() {
   const { user, bookings } = useStore()
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('all')
   const [query, setQuery] = useState('')
-  if (!user) return <Navigate to="/dang-nhap" replace state={{ from: '/dat-phong-cua-toi' }} />
+  if (!user) {
+    return (
+      <div className="wrap page">
+        <h1>Đặt phòng của tôi</h1>
+        <p className="lead">Xem đặt phòng bằng số điện thoại đã dùng khi đặt. Không cần tài khoản.</p>
+        <div className="empty">
+          <strong>Tra cứu đặt phòng</strong>
+          <p>Nhập số điện thoại để xem thông tin đã đặt, mã cửa và hướng dẫn sử dụng.</p>
+          <Link to="/tra-cuu" className="btn btn-primary">
+            Tra cứu đặt phòng
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const mine = bookings.filter((item) => item.phone === user.phone)
   const shown = mine.filter((item) => {

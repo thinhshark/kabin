@@ -107,9 +107,6 @@ export function LookupPage() {
           <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
         </p>
         <p className="hint center">Dùng đúng số điện thoại đã nhập khi đặt phòng.</p>
-        <p className="hint center">
-          Đã có tài khoản? <Link to="/dang-nhap" state={{ from: '/dat-phong-cua-toi' }}>Đăng nhập</Link>
-        </p>
       </div>
     </div>
   )

@@ -68,8 +68,7 @@ export function PromosPage() {
                     aria-label={kept ? 'Bỏ lưu' : 'Lưu mã'}
                     onClick={() => {
                       if (!user) {
-                        showToast('Đăng nhập để lưu ưu đãi')
-                        navigate('/dang-nhap', { state: { from: '/uu-dai' } })
+                        showToast('Mã ưu đãi dùng được khi đặt phòng')
                         return
                       }
                       toggleSavedPromo(promo.code)

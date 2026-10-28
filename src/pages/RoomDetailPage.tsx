@@ -106,36 +106,35 @@ export function RoomDetailPage() {
               </span>
             </label>
             <label className="field">
-              Giờ trả phòng
+              Thời lượng
               <span className="control">
-                <Clock size={16} />
-                <TimeField
-                  hideLabel
-                  label="Giờ trả phòng"
-                  value={draft.checkoutTime}
-                  align="end"
-                  onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
-                />
+                <Hourglass size={16} />
+                <select
+                  value={draft.duration}
+                  onChange={(event) => {
+                    const duration = Number(event.target.value)
+                    setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
+                  }}
+                >
+                  {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
+                    <option key={hours} value={hours}>
+                      {hoursLabel(hours)}
+                    </option>
+                  ))}
+                </select>
               </span>
             </label>
           </div>
           <label className="field">
-            Thời lượng
+            Giờ trả phòng
             <span className="control">
-              <Hourglass size={16} />
-              <select
-                value={draft.duration}
-                onChange={(event) => {
-                  const duration = Number(event.target.value)
-                  setDraft({ duration, checkoutTime: checkoutLabel(draft.time, duration).time })
-                }}
-              >
-                {(DURATIONS.includes(draft.duration) ? DURATIONS : [draft.duration, ...DURATIONS]).map((hours) => (
-                  <option key={hours} value={hours}>
-                    {hoursLabel(hours)}
-                  </option>
-                ))}
-              </select>
+              <Clock size={16} />
+              <TimeField
+                hideLabel
+                label="Giờ trả phòng"
+                value={draft.checkoutTime}
+                onChange={(checkoutTime) => setDraft({ checkoutTime, duration: stayHours(draft.time, checkoutTime) })}
+              />
             </span>
           </label>
           <p className="hint">Trả phòng lúc {draft.checkoutTime}{nextDay ? ' hôm sau' : ''}</p>

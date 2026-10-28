@@ -58,7 +58,7 @@ export function GuidePage() {
         </article>
       ) : (
         <p className="callout">
-          Chưa chọn một đặt phòng. <Link to="/tra-cuu">Tra cứu vé</Link> hoặc <Link to="/dat-phong-cua-toi">mở đặt phòng của tôi</Link> để xem mã cửa.
+          Chưa chọn một đặt phòng. <Link to="/tra-cuu">Tra cứu đặt phòng</Link> để xem mã cửa.
         </p>
       )}
 

@@ -335,6 +335,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .chip.on { background: var(--brand); color: white; border-color: var(--brand); }
 .catalog { display: grid; grid-template-columns: 250px 1fr; gap: 22px; align-items: start; }
 .filters { padding: 16px; position: sticky; top: 90px; }
+.filters.static { position: static; }
 .filters fieldset { border: 0; border-top: 1px solid var(--line); margin: 12px 0; padding: 12px 0 0; }
 .filters legend { font-weight: 700; margin-bottom: 8px; }
 .filter-note { background: var(--brand-soft); border-radius: 14px; padding: 12px; margin-top: 12px; }
@@ -682,7 +683,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   .login-card { margin-top: 8px; }
   .hero { height: 340px; border-radius: 20px; }
   .hero-copy { left: 18px; right: 18px; top: 28px; }
-  .search-card { margin: -36px 0 20px; top: 74px; }
+  .search-card { position: static; margin: -36px 0 20px; }
+  .search-grid { grid-template-columns: 1fr 1fr; }
+  .search-grid > label.control { grid-column: 1 / -1; }
   .loc-grid, .cards-3, .steps-grid, .guide-grid, .place-grid, .about-split, .reason-grid { grid-template-columns: 1fr; }
   .cta-foot { flex-direction: column; align-items: flex-start; }
   .about-split img { height: 220px; }
