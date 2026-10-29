@@ -76,9 +76,14 @@ export function LookupPage() {
             ) : (
               found.map((booking) => <LookupStay key={booking.code} booking={booking} />)
             )}
-            <button type="button" className="text-btn" onClick={() => setLookupPhone('')}>
-              Tra cứu số khác
-            </button>
+            <div className="lookup-follow">
+              <button type="button" className="text-btn" onClick={() => setLookupPhone('')}>
+                Tra cứu số khác
+              </button>
+              <p className="hint">
+                <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
+              </p>
+            </div>
           </div>
         ) : (
           <form
@@ -103,9 +108,11 @@ export function LookupPage() {
             </button>
           </form>
         )}
-        <p className="hint center">
-          <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
-        </p>
+        {unlocked ? null : (
+          <p className="hint center">
+            <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
+          </p>
+        )}
         <p className="hint center">Dùng đúng số điện thoại đã nhập khi đặt phòng.</p>
       </div>
     </div>
@@ -233,7 +240,7 @@ function LookupStay({ booking }: { booking: Booking }) {
         </ol>
         <p className="hint">Mật khẩu Wi-Fi dán ở mặt trong cửa. Đến giờ trả phòng, quý khách vui lòng tắt điều hòa, đóng cửa trước khi rời phòng.</p>
         <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>1800.2230</strong>
+          <Phone size={18} /> <span>Liên hệ Hotline hỗ trợ</span> <strong>1800.2230</strong>
         </a>
       </section>
     </article>

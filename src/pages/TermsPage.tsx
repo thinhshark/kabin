@@ -66,7 +66,7 @@ export function TermsPage() {
           ))}
         </ol>
         <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> Liên hệ Hotline hỗ trợ <strong>1800.2230</strong>
+          <Phone size={18} /> <span>Liên hệ Hotline hỗ trợ</span> <strong>1800.2230</strong>
         </a>
       </article>
     </div>
