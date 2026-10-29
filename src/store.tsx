@@ -22,6 +22,8 @@ export type Draft = {
   phone: string
   phoneVerified: boolean
   email: string
+  idFront: string
+  idBack: string
   promoCode: string
   agreed: boolean
   bookingCode: string
@@ -63,6 +65,8 @@ function emptyDraft(): Draft {
     phone: '',
     phoneVerified: false,
     email: '',
+    idFront: '',
+    idBack: '',
     promoCode: '',
     agreed: false,
     bookingCode: '',
@@ -175,7 +179,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const payload: Persisted = { user, bookings, draft, lookupPhone }
-    localStorage.setItem(KEY, JSON.stringify(payload))
+    try {
+      localStorage.setItem(KEY, JSON.stringify(payload))
+    } catch {
+      // Ảnh căn cước lớn có thể vượt dung lượng lưu trên máy.
+    }
   }, [user, bookings, draft, lookupPhone])
 
   useEffect(() => {

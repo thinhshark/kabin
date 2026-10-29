@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, BadgeCheck, Lock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react'
 import { quoteOf } from '../data'
 import { useStore } from '../store'
 import { Photo, Stepper, useTitle } from '../components/ui'
@@ -63,6 +63,7 @@ export function ReviewPage() {
     if (!isPhone(draft.phone)) next.phone = 'Nhập số điện thoại hợp lệ.'
     else if (!draft.phoneVerified) next.phone = 'Xác thực số điện thoại để tiếp tục.'
     if (!isEmail(draft.email)) next.email = 'Nhập email để nhận thông tin đặt phòng.'
+    if (!draft.idFront || !draft.idBack) next.id = 'Gửi đủ ảnh mặt trước và mặt sau CCCD.'
     if (!draft.agreed) next.agreed = 'Bạn cần đồng ý quy định đặt phòng.'
     if (isPastSlot(draft.date, draft.time)) next.slot = 'Khung giờ này đã qua. Hãy chọn lại phòng.'
     if (draft.promoCode && !promo.ok) next.promo = promo.message
@@ -139,6 +140,34 @@ export function ReviewPage() {
               <span className="hint">Thông tin nhận phòng sẽ được gửi qua SMS và email.</span>
               {errors.email ? <span className="form-error">{errors.email}</span> : null}
             </label>
+          </section>
+
+          <section className="panel">
+            <h2>Căn cước công dân</h2>
+            <p className="hint">Gửi ảnh mặt trước và mặt sau. Ảnh dùng để xác nhận khách nhận phòng.</p>
+            <div className="id-grid">
+              <IdSlot
+                label="Mặt trước"
+                value={draft.idFront}
+                onPick={(idFront) => {
+                  setDraft({ idFront })
+                  setErrors((current) => ({ ...current, id: '' }))
+                }}
+                onClear={() => setDraft({ idFront: '' })}
+                onError={() => showToast('Không đọc được ảnh. Hãy chọn JPG hoặc PNG.')}
+              />
+              <IdSlot
+                label="Mặt sau"
+                value={draft.idBack}
+                onPick={(idBack) => {
+                  setDraft({ idBack })
+                  setErrors((current) => ({ ...current, id: '' }))
+                }}
+                onClear={() => setDraft({ idBack: '' })}
+                onError={() => showToast('Không đọc được ảnh. Hãy chọn JPG hoặc PNG.')}
+              />
+            </div>
+            {errors.id ? <span className="form-error">{errors.id}</span> : null}
           </section>
 
           <section className="panel">
@@ -231,6 +260,82 @@ export function ReviewPage() {
       </div>
     </div>
   )
+}
+
+function IdSlot({
+  label,
+  value,
+  onPick,
+  onClear,
+  onError,
+}: {
+  label: string
+  value: string
+  onPick: (dataUrl: string) => void
+  onClear: () => void
+  onError: () => void
+}) {
+  return (
+    <div className="id-slot">
+      <span>{label}</span>
+      <label className={value ? 'id-pick has' : 'id-pick'}>
+        {value ? (
+          <img src={value} alt={label} />
+        ) : (
+          <>
+            <ImagePlus size={22} />
+            <small>Chọn ảnh</small>
+          </>
+        )}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          aria-label={label}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (!file) return
+            readIdPhoto(file).then(onPick).catch(onError)
+          }}
+        />
+      </label>
+      {value ? (
+        <button type="button" className="text-btn" onClick={onClear}>
+          Xóa ảnh
+        </button>
+      ) : (
+        <span className="hint">JPG hoặc PNG</span>
+      )}
+    </div>
+  )
+}
+
+function readIdPhoto(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const image = new Image()
+    const url = URL.createObjectURL(file)
+    image.onload = () => {
+      const max = 1280
+      const scale = Math.min(1, max / Math.max(image.width, image.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(image.width * scale))
+      canvas.height = Math.max(1, Math.round(image.height * scale))
+      const context = canvas.getContext('2d')
+      if (!context) {
+        URL.revokeObjectURL(url)
+        reject(new Error('canvas'))
+        return
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', 0.72))
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('image'))
+    }
+    image.src = url
+  })
 }
 
 function PayLines({ base, discount, total }: { base: number; discount: number; total: number }) {
