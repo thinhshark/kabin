@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Headphones, MapPin, Phone } from 'lucide-react'
-import { displayStatus, getLocation, getRoom, PHOTOS, type Booking, type BookingStatus } from '../data'
+import { displayStatus, getLocation, getRoom, PHOTOS, refundEstimate, type Booking, type BookingStatus } from '../data'
 import { useStore } from '../store'
 import { CopyButton, useTitle } from '../components/ui'
 import { checkoutLabel, formatDate, formatMoney, isPhone, mapsUrl, maskPhone, normalizePhone } from '../utils'
@@ -12,6 +12,7 @@ const STATUS_ORDER: Record<BookingStatus, number> = {
   pending: 2,
   done: 3,
   expired: 4,
+  cancelled: 5,
 }
 
 export function LookupPage() {
@@ -48,13 +49,16 @@ export function LookupPage() {
         <span className="pill pill-pending">Không cần tạo tài khoản</span>
         <ol className="stepper compact">
           <li className="step on">
-            <b>1</b> Số điện thoại
+            <b>1</b>
+            <span>Số điện thoại</span>
           </li>
           <li className={unlocked ? 'step done' : 'step'}>
-            <b>2</b> Xác thực OTP
+            <b>2</b>
+            <span>Xác thực OTP</span>
           </li>
           <li className={unlocked ? 'step on' : 'step'}>
-            <b>3</b> Xem thông tin
+            <b>3</b>
+            <span>Xem thông tin</span>
           </li>
         </ol>
         <h1>Tra cứu đặt phòng</h1>
@@ -83,6 +87,7 @@ export function LookupPage() {
               <p className="hint">
                 <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
               </p>
+              <p className="hint">Dùng đúng số điện thoại đã nhập khi đặt phòng.</p>
             </div>
           </div>
         ) : (
@@ -109,17 +114,20 @@ export function LookupPage() {
           </form>
         )}
         {unlocked ? null : (
-          <p className="hint center">
-            <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
-          </p>
+          <div className="lookup-follow center">
+            <p className="hint">
+              <Headphones size={14} /> <Link to="/tro-giup">Tôi cần hỗ trợ tra cứu</Link>
+            </p>
+            <p className="hint">Dùng đúng số điện thoại đã nhập khi đặt phòng.</p>
+          </div>
         )}
-        <p className="hint center">Dùng đúng số điện thoại đã nhập khi đặt phòng.</p>
       </div>
     </div>
   )
 }
 
 function LookupStay({ booking }: { booking: Booking }) {
+  const { cancelBooking } = useStore()
   const location = getLocation(booking.locationId)
   const room = getRoom(booking.roomId)
   const status = displayStatus(booking)
@@ -127,8 +135,20 @@ function LookupStay({ booking }: { booking: Booking }) {
   const total = Math.max(0, booking.price - booking.discount)
   const valid = status === 'upcoming' || status === 'active'
   const showCodes = valid && Boolean(booking.gateCode)
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const estimate = refundEstimate(booking)
+
+  useEffect(() => {
+    if (!cancelOpen) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [cancelOpen])
 
   return (
+    <>
     <article className="lookup-stay">
       <section>
         <div className="summary-head">
@@ -177,6 +197,11 @@ function LookupStay({ booking }: { booking: Booking }) {
             {formatMoney(total)}
           </li>
         </ul>
+        {valid ? (
+          <button type="button" className="btn btn-line btn-block" onClick={() => setCancelOpen(true)}>
+            Hủy phòng
+          </button>
+        ) : null}
       </section>
 
       <section>
@@ -244,6 +269,39 @@ function LookupStay({ booking }: { booking: Booking }) {
         </a>
       </section>
     </article>
+      {cancelOpen ? (
+        <div className="modal-root" role="presentation" onClick={() => setCancelOpen(false)}>
+          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="cancel-title" onClick={(event) => event.stopPropagation()}>
+            <h2 id="cancel-title">Hủy phòng</h2>
+            <p className="refund-line">
+              Số tiền được hoàn ước tính: <strong>{formatMoney(estimate.amount)}</strong>
+            </p>
+            <ul className="policy-note">
+              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
+              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
+              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
+            </ul>
+            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+            <p className="confirm-ask">Bạn vẫn muốn hủy chứ?</p>
+            <div className="stack-buttons">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  cancelBooking(booking.code)
+                  setCancelOpen(false)
+                }}
+              >
+                Hủy phòng
+              </button>
+              <button type="button" className="btn btn-line" onClick={() => setCancelOpen(false)}>
+                Giữ phòng
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }
 

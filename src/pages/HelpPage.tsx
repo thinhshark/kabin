@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronDown, MessageCircle, Phone, Search, Send } from 'lucide-react'
 import { FAQS } from '../data'
 import { useStore } from '../store'
 import { useTitle } from '../components/ui'
 import { cx } from '../utils'
 
-const TOPICS = ['Tất cả', 'Đặt phòng', 'Thanh toán', 'Nhận phòng', 'Tài khoản'] as const
+const TOPICS = ['Tất cả', 'Đặt phòng', 'Hủy phòng', 'Thanh toán', 'Nhận phòng', 'Tài khoản'] as const
 
 export function HelpPage() {
   useTitle('Trợ giúp')
@@ -61,7 +61,7 @@ export function HelpPage() {
                     {item.q}
                     <ChevronDown size={18} />
                   </button>
-                  {isOpen ? <div className="acc-body">{item.a}</div> : null}
+                  {isOpen ? <div className="acc-body">{item.id === 'cancel-how' ? <CancelHowAnswer /> : item.a}</div> : null}
                 </div>
               )
             })}
@@ -121,5 +121,13 @@ export function HelpPage() {
         </aside>
       </div>
     </div>
+  )
+}
+
+function CancelHowAnswer() {
+  return (
+    <>
+      Mở trang <Link to="/tra-cuu">Tra cứu</Link>, xác thực số điện thoại đã đặt, rồi chọn Hủy phòng. Có thể liên hệ Hotline 1800.2230 nếu cần hỗ trợ. Thời điểm hủy được tính theo giờ nhận phòng đã đặt.
+    </>
   )
 }

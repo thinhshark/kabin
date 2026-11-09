@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
 import { getLocation, roomAmenities, roomsAt, TIMES } from '../data'
 import { useStore } from '../store'
@@ -14,6 +14,7 @@ export function LocationDetailPage() {
   useTitle(location?.name ?? 'Cơ sở')
   const { draft, setDraft } = useStore()
   const navigate = useNavigate()
+  if (location?.openingSoon) return <Navigate to="/co-so" replace />
   if (!location) {
     return (
       <div className="wrap page">
@@ -51,6 +52,19 @@ export function LocationDetailPage() {
       <div className="detail">
         <Gallery photos={location.photos} alt={location.name} />
         <aside className="book-widget">
+          {location.openingSoon ? (
+            <div className="soon-panel">
+              <span className="soon-badge">
+                <i /> Opening soon
+              </span>
+              <h2>Cơ sở này sắp mở cửa</h2>
+              <p>Kabin Tây Hồ chưa nhận đặt phòng. Bạn có thể xem một cơ sở đang mở.</p>
+              <Link to="/co-so" className="btn btn-primary btn-block">
+                Xem cơ sở đang mở
+              </Link>
+            </div>
+          ) : (
+            <>
           <h2>Chọn thời gian nghỉ</h2>
           <div className="split-2">
             <label className="field">
@@ -134,6 +148,8 @@ export function LocationDetailPage() {
           >
             Xem phòng trống <ArrowRight size={16} />
           </button>
+            </>
+          )}
           <div className="help-mini">
             <span>
               <Headphones size={16} /> Bạn cần hỗ trợ?
@@ -160,15 +176,21 @@ export function LocationDetailPage() {
                     Phòng {room.number} · {room.type}
                   </strong>
                   <p>{roomAmenities(room).join(' · ')}</p>
-                  <span className="pill pill-upcoming">Còn trống</span>
+                  <span className={location.openingSoon ? 'pill pill-pending' : 'pill pill-upcoming'}>
+                    {location.openingSoon ? 'Opening soon' : 'Còn trống'}
+                  </span>
                 </div>
                 <div className="mini-room-end">
                   <b className="price">
                     {formatMoney(room.price3h)} <small>/ 3 giờ</small>
                   </b>
-                  <Link to={`/co-so/${location.id}/phong/${room.id}`} className="btn btn-primary btn-sm">
-                    Xem phòng <ArrowRight size={15} />
-                  </Link>
+                  {location.openingSoon ? (
+                    <span className="btn btn-line btn-sm soon-disabled">Opening soon</span>
+                  ) : (
+                    <Link to={`/co-so/${location.id}/phong/${room.id}`} className="btn btn-primary btn-sm">
+                      Xem phòng <ArrowRight size={15} />
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}

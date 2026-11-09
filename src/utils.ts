@@ -69,6 +69,21 @@ export function isPastSlot(date: string, time: string) {
   return base.getTime() + clockMinutes(time) * 60000 < Date.now()
 }
 
+export function nextBookableSlot(from = new Date()) {
+  const cursor = new Date(from.getTime())
+  const onMark = cursor.getMinutes() % 15 === 0 && cursor.getSeconds() === 0 && cursor.getMilliseconds() === 0
+  cursor.setSeconds(0, 0)
+  if (!onMark) {
+    const remainder = cursor.getMinutes() % 15
+    cursor.setMinutes(cursor.getMinutes() + (remainder === 0 ? 15 : 15 - remainder))
+  }
+  const local = new Date(cursor.getTime() - cursor.getTimezoneOffset() * 60000)
+  return {
+    date: local.toISOString().slice(0, 10),
+    time: `${String(cursor.getHours()).padStart(2, '0')}:${String(cursor.getMinutes()).padStart(2, '0')}`,
+  }
+}
+
 export function normalizePhone(input: string) {
   let d = input.replace(/\D/g, '')
   if (d.startsWith('84')) d = '0' + d.slice(2)

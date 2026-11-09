@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { BadgeCheck, Download, MapPin, Phone } from 'lucide-react'
+import { BadgeCheck, MapPin, Phone, ScrollText } from 'lucide-react'
 import { displayStatus, getLocation, getRoom } from '../data'
 import { useStore } from '../store'
-import { CopyButton, Photo, StatusPill, useTitle } from '../components/ui'
+import { CopyButton, Photo, useTitle } from '../components/ui'
 import { checkoutLabel, formatDate, formatMoney, mapsUrl, maskPhone } from '../utils'
 
 export function TicketPage() {
@@ -29,6 +30,7 @@ export function TicketPage() {
   const end = checkoutLabel(booking.time, booking.duration)
   const total = Math.max(0, booking.price - booking.discount)
   const showCodes = (status === 'upcoming' || status === 'active') && Boolean(booking.gateCode)
+  const [policyOpen, setPolicyOpen] = useState(false)
 
   return (
     <div className="wrap page">
@@ -36,21 +38,28 @@ export function TicketPage() {
         <span className="state-icon ok">
           <BadgeCheck size={28} />
         </span>
-        <h1>{status === 'pending' ? 'Đang chờ xử lý' : status === 'expired' ? 'Đặt phòng đã hết hạn' : 'Đặt phòng thành công!'}</h1>
+        <h1>
+          {status === 'pending'
+            ? 'Đang chờ xử lý'
+            : status === 'expired'
+              ? 'Đặt phòng đã hết hạn'
+              : status === 'cancelled'
+                ? 'Đặt phòng đã hủy'
+                : 'Đặt phòng thành công!'}
+        </h1>
         <p className="lead">
           {status === 'pending'
             ? 'Tiền đã được ghi nhận và đang chờ Kabin sắp xếp.'
             : status === 'expired'
               ? 'Khung giờ này không còn được giữ.'
-              : 'Kabin đã xác nhận khoảng nghỉ của bạn.'}
+              : status === 'cancelled'
+                ? 'Phòng đã được mở lại. Mã cửa không còn hiệu lực.'
+                : 'Kabin đã xác nhận khoảng nghỉ của bạn.'}
         </p>
       </div>
       <div className="ticket-grid">
         <article className="panel ticket">
-          <div className="summary-head">
-            <h2>Vé đặt phòng</h2>
-            <StatusPill status={status} />
-          </div>
+          <h2>Vé đặt phòng</h2>
           <p className="code-line">
             Mã đặt phòng: <b>{booking.code}</b>
             <CopyButton value={booking.code} quiet />
@@ -79,10 +88,6 @@ export function TicketPage() {
             <li>
               <span>Giờ nhận phòng</span>
               {booking.time}
-            </li>
-            <li>
-              <span>Email</span>
-              {booking.email || '—'}
             </li>
             <li>
               <span>Giờ trả phòng</span>
@@ -122,22 +127,43 @@ export function TicketPage() {
               </Link>
             </>
           )}
-          <div className="btn-row">
+          <div className="btn-row ticket-actions">
             {location ? (
               <a className="btn btn-line" href={mapsUrl(location.name, location.district)} target="_blank" rel="noreferrer">
                 <MapPin size={16} /> Chỉ đường
               </a>
             ) : null}
-            <button type="button" className="btn btn-line" onClick={() => window.print()}>
-              <Download size={16} /> Lưu vé
+            <button type="button" className="btn btn-line" onClick={() => setPolicyOpen(true)}>
+              <ScrollText size={16} /> Chính sách hoàn hủy
             </button>
           </div>
-          <p className="hint">Thông tin đặt phòng đã được gửi qua SMS và email.</p>
+          <p className="hint">Thông tin đặt phòng sẽ được gửi qua SMS.</p>
           <Link to="/tro-giup" className="text-btn">
             <Phone size={15} /> Cần hỗ trợ nhận phòng?
           </Link>
         </aside>
       </div>
+      {policyOpen ? (
+        <div className="modal-root" role="presentation" onClick={() => setPolicyOpen(false)}>
+          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="refund-policy-title" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-x" onClick={() => setPolicyOpen(false)} aria-label="Đóng">
+              ×
+            </button>
+            <h2 id="refund-policy-title">Chính sách hoàn hủy</h2>
+            <ul className="policy-note">
+              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
+              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
+              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
+            </ul>
+            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+            <div className="stack-buttons">
+              <button type="button" className="btn btn-primary" onClick={() => setPolicyOpen(false)}>
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

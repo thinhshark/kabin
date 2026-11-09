@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, RefreshCw, Search } from 'lucide-react'
-import { displayStatus, getLocation, getRoom, type BookingStatus } from '../data'
+import { displayStatus, getLocation, getRoom, statusLabel, type BookingStatus } from '../data'
 import { useStore } from '../store'
 import { AccountNav, Photo, StatusPill, useTitle } from '../components/ui'
 import { checkoutLabel, formatDate, formatMoney } from '../utils'
@@ -92,7 +92,7 @@ function BookingCard({ code }: { code: string }) {
   const total = Math.max(0, booking.price - booking.discount)
   return (
     <article className="booking-card">
-      <span className={`flag flag-${status}`}>{status === 'upcoming' ? 'Sắp tới' : status === 'active' ? 'Đang sử dụng' : status === 'done' ? 'Đã hoàn tất' : status === 'pending' ? 'Đang xử lý' : 'Hết hạn'}</span>
+      <span className={`flag flag-${status}`}>{statusLabel(status)}</span>
       {room ? <Photo src={room.photos[0]} alt="" /> : null}
       <div>
         <h2>{location?.name}</h2>

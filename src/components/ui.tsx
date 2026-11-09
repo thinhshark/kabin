@@ -17,6 +17,7 @@ import type { Amenity, BookingStatus } from '../data'
 import { statusLabel } from '../data'
 import { useStore } from '../store'
 import { copyText, cx, formatMoney, initials } from '../utils'
+import { LogoHorizontal } from './brandLogo'
 
 export function useTitle(title: string) {
   useEffect(() => {
@@ -24,25 +25,10 @@ export function useTitle(title: string) {
   }, [title])
 }
 
-export function LogoMark({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 136 120" aria-hidden="true">
-      <path d="M8 0H56A56 56 0 0 1 0 56V8A8 8 0 0 1 8 0Z" />
-      <path d="M0 64A56 56 0 0 1 56 120H8A8 8 0 0 1 0 112V64Z" />
-      <path d="M64 6A6 6 0 0 1 70 0H108A28 28 0 0 1 108 56H70A6 6 0 0 1 64 50V6Z" />
-      <path d="M64 70A6 6 0 0 1 70 64H108A28 28 0 0 1 108 120H70A6 6 0 0 1 64 114V70Z" />
-    </svg>
-  )
-}
-
 export function Logo() {
   return (
     <Link to="/" className="logo" aria-label="Kabin Stays, về trang chủ">
-      <LogoMark className="logo-mark" />
-      <span className="logo-word">
-        <span className="logo-name">KABIN</span>
-        <span className="logo-sub">STAYS</span>
-      </span>
+      <LogoHorizontal />
     </Link>
   )
 }

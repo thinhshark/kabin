@@ -22,6 +22,7 @@ export type Location = {
   description: string
   cover: string
   photos: string[]
+  openingSoon?: boolean
 }
 
 export type Room = {
@@ -49,7 +50,7 @@ export type Promo = {
 
 export type Faq = {
   id: string
-  topic: 'Đặt phòng' | 'Thanh toán' | 'Nhận phòng' | 'Tài khoản'
+  topic: 'Đặt phòng' | 'Hủy phòng' | 'Thanh toán' | 'Nhận phòng' | 'Tài khoản'
   q: string
   a: string
 }
@@ -67,7 +68,7 @@ export type Policy = {
   blocks: PolicyBlock[]
 }
 
-export type BookingStatus = 'upcoming' | 'active' | 'done' | 'expired' | 'pending'
+export type BookingStatus = 'upcoming' | 'active' | 'done' | 'expired' | 'pending' | 'cancelled'
 
 export type Booking = {
   id: string
@@ -147,6 +148,7 @@ export const LOCATIONS: Location[] = [
       'Phòng rộng, ánh đèn ấm và bồn tắm cho những khung giờ cần chậm lại. Tự nhận phòng, không cần quầy lễ tân.',
     cover: PHOTOS.relax,
     photos: [PHOTOS.relax, PHOTOS.bath, PHOTOS.corner],
+    openingSoon: true,
   },
   {
     id: 'ba-dinh',
@@ -332,13 +334,13 @@ export const FAQS: Faq[] = [
     id: 'code',
     topic: 'Nhận phòng',
     q: 'Tôi nhận mã mở cửa ở đâu?',
-    a: 'Sau khi booking được xác nhận, mã cổng và mã phòng hiện trên vé. Khách đặt qua web nhận thêm thông tin qua SMS và email.',
+    a: 'Sau khi booking được xác nhận, mã cổng và mã phòng hiện trên vé. Khách đặt qua web nhận thêm thông tin qua SMS.',
   },
   {
     id: 'account',
     topic: 'Tài khoản',
     q: 'Tôi có cần tài khoản để đặt phòng không?',
-    a: 'Không. Bạn có thể đặt trên web bằng số điện thoại và email. Tài khoản giúp xem lại vé, ưu đãi và lịch sử ở một nơi.',
+    a: 'Không. Bạn có thể đặt trên web bằng số điện thoại. Tài khoản giúp xem lại vé, ưu đãi và lịch sử ở một nơi.',
   },
   {
     id: 'late',
@@ -362,7 +364,25 @@ export const FAQS: Faq[] = [
     id: 'change',
     topic: 'Đặt phòng',
     q: 'Tôi muốn đổi giờ hoặc hủy thì làm thế nào?',
-    a: 'Trong thời gian giữ phòng bạn có thể đặt lại. Sau khi đã thanh toán, hãy gửi yêu cầu hỗ trợ để được kiểm tra đổi lịch hoặc hoàn tiền.',
+    a: 'Trong thời gian giữ phòng bạn có thể đặt lại. Sau khi đã thanh toán, liên hệ Hotline 1800.2230 hoặc gửi yêu cầu hỗ trợ kèm mã đặt phòng. Mức hoàn tiền theo mục Hủy phòng.',
+  },
+  {
+    id: 'cancel-rate',
+    topic: 'Hủy phòng',
+    q: 'Hủy phòng được hoàn bao nhiêu?',
+    a: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền. Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+  },
+  {
+    id: 'cancel-weekend',
+    topic: 'Hủy phòng',
+    q: 'Cuối tuần và ngày lễ có được hoàn tiền không?',
+    a: 'Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+  },
+  {
+    id: 'cancel-how',
+    topic: 'Hủy phòng',
+    q: 'Tôi hủy phòng bằng cách nào?',
+    a: 'Mở trang Tra cứu, xác thực số điện thoại đã đặt, rồi chọn Hủy phòng. Có thể liên hệ Hotline 1800.2230 nếu cần hỗ trợ. Thời điểm hủy được tính theo giờ nhận phòng đã đặt.',
   },
 ]
 
@@ -373,7 +393,7 @@ export const POLICIES: Policy[] = [
     blocks: [
       {
         title: 'Thông tin đặt phòng',
-        body: 'Khách đặt qua app cần đăng nhập. Khách đặt qua web xác thực số điện thoại bằng OTP và cung cấp email.',
+        body: 'Khách đặt qua app cần đăng nhập. Khách đặt qua web xác thực số điện thoại bằng OTP.',
       },
       {
         title: 'Giữ phòng và xác nhận',
@@ -386,7 +406,7 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Nhận thông tin vào phòng',
-        body: 'Mã cổng và mã phòng được gửi sau khi booking được xác nhận. Khách dùng app xem trên vé; khách đặt qua web nhận SMS và email.',
+        body: 'Mã cổng và mã phòng được gửi sau khi booking được xác nhận. Khách dùng app xem trên vé; khách đặt qua web nhận SMS.',
       },
     ],
   },
@@ -418,7 +438,8 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Sau khi đã nhận tiền',
-        body: 'Đổi giờ, đổi phòng hoặc hoàn tiền được hỗ trợ xem xét từng trường hợp. Gửi yêu cầu kèm mã đặt phòng.',
+        body: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền.',
+        highlight: 'Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
       },
     ],
   },
@@ -428,7 +449,7 @@ export const POLICIES: Policy[] = [
     blocks: [
       {
         title: 'Dữ liệu Kabin giữ',
-        body: 'Họ tên, số điện thoại, email và thông tin đặt phòng dùng để xác nhận booking, gửi mã cửa và hỗ trợ khi cần.',
+        body: 'Họ tên, số điện thoại và thông tin đặt phòng dùng để xác nhận booking, gửi mã cửa và hỗ trợ khi cần.',
       },
       {
         title: 'Mã cửa',
@@ -513,6 +534,35 @@ export function quoteOf(roomId: string, duration: number, promoCode: string) {
   }
 }
 
+const HOLIDAYS = new Set([
+  '2026-01-01',
+  '2026-02-16',
+  '2026-02-17',
+  '2026-02-18',
+  '2026-02-19',
+  '2026-02-20',
+  '2026-04-27',
+  '2026-04-30',
+  '2026-05-01',
+  '2026-09-02',
+  '2027-01-01',
+  '2027-04-30',
+  '2027-05-01',
+  '2027-09-02',
+])
+
+export function refundEstimate(booking: Booking, now = new Date()) {
+  const paid = Math.max(0, booking.price - booking.discount)
+  const day = new Date(`${booking.date}T12:00:00`)
+  const weekend = day.getDay() === 0 || day.getDay() === 6
+  if (weekend || HOLIDAYS.has(booking.date)) return { amount: 0, paid }
+  const start = new Date(`${booking.date}T${booking.time}:00`)
+  const remaining = start.getTime() - now.getTime()
+  if (remaining >= 12 * 3600000) return { amount: paid, paid }
+  if (remaining >= 2 * 3600000) return { amount: Math.round(paid / 2), paid }
+  return { amount: 0, paid }
+}
+
 export function displayStatus(booking: Booking, now = new Date()): BookingStatus {
   if (booking.status !== 'upcoming') return booking.status
   const start = new Date(`${booking.date}T${booking.time}:00`)
@@ -534,6 +584,8 @@ export function statusLabel(status: BookingStatus) {
       return 'Hết hạn'
     case 'pending':
       return 'Đang xử lý'
+    case 'cancelled':
+      return 'Đã hủy'
   }
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin, SlidersHorizontal } from 'lucide-react'
 import { FILTER_AMENITIES, getLocation, LOCATIONS, ROOMS, roomAmenities, roomsAt, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
@@ -47,7 +47,10 @@ export function SelectRoomPage() {
       if (a.available !== b.available) return a.available ? -1 : 1
       return byChoice(a, b)
     })
-    const otherRooms = ROOMS.filter((room) => room.locationId !== location.id && room.available && matches(room))
+    const otherRooms = ROOMS.filter((room) => {
+      const place = getLocation(room.locationId)
+      return room.locationId !== location.id && !place?.openingSoon && room.available && matches(room)
+    })
     otherRooms.sort((a, b) => {
       const distance = (getLocation(a.locationId)?.distance ?? 0) - (getLocation(b.locationId)?.distance ?? 0)
       if (distance !== 0) return distance
@@ -66,6 +69,8 @@ export function SelectRoomPage() {
   }
 
   const openCount = here.filter((room) => room.available).length + elsewhere.length
+
+  if (location.openingSoon) return <Navigate to="/co-so" replace />
 
   return (
     <div className="wrap page">
@@ -98,8 +103,8 @@ export function SelectRoomPage() {
                 }}
               >
                 {LOCATIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
+                  <option key={item.id} value={item.id} disabled={item.openingSoon && item.id !== location.id}>
+                    {item.openingSoon ? `${item.name} · Opening soon` : item.name}
                   </option>
                 ))}
               </select>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Download, Lock, RefreshCw, Timer } from 'lucide-react'
+import { Download, RefreshCw, Timer } from 'lucide-react'
 import { quoteOf } from '../data'
 import { useStore } from '../store'
 import { CopyButton, DemoQr, Photo, useTitle } from '../components/ui'
@@ -181,9 +181,6 @@ export function PaymentPage() {
           </Link>
         </aside>
       </div>
-      <p className="hint lock-hint">
-        <Lock size={14} /> Đây là thông tin ngân hàng minh họa, không phải tài khoản nhận tiền thật.
-      </p>
     </div>
   )
 }

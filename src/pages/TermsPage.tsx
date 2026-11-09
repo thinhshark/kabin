@@ -9,7 +9,7 @@ const SECTIONS = [
   },
   {
     title: 'Đặt phòng',
-    body: 'Khách chọn cơ sở, ngày, giờ nhận phòng và giờ trả phòng, rồi xác thực số điện thoại bằng OTP. Phòng được giữ 10 phút để thanh toán. Khi đặt phòng được xác nhận, thông tin và mã cửa được gửi qua SMS, email, và có thể xem lại ở trang Tra cứu đặt phòng.',
+    body: 'Khách chọn cơ sở, ngày, giờ nhận phòng và giờ trả phòng, rồi xác thực số điện thoại bằng OTP. Phòng được giữ 10 phút để thanh toán. Khi đặt phòng được xác nhận, thông tin và mã cửa được gửi qua SMS, và có thể xem lại ở trang Tra cứu đặt phòng.',
   },
   {
     title: 'Mã cửa',
@@ -27,6 +27,10 @@ const SECTIONS = [
   {
     title: 'Trả phòng',
     body: 'Đến giờ trả phòng, quý khách vui lòng tắt điều hòa, đóng cửa trước khi rời phòng. Không cần trả chìa khóa.',
+  },
+  {
+    title: 'Hủy và hoàn tiền',
+    body: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền. Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
   },
   {
     title: 'Đổi giờ và hỗ trợ',

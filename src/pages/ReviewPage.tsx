@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react
 import { quoteOf } from '../data'
 import { useStore } from '../store'
 import { Photo, Stepper, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isEmail, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
+import { checkoutLabel, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
 
 export function ReviewPage() {
   useTitle('Kiểm tra đặt phòng')
@@ -12,18 +12,31 @@ export function ReviewPage() {
   const navigate = useNavigate()
   const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [blockers, setBlockers] = useState<string[]>([])
+  const [notice, setNotice] = useState<'errors' | 'policy' | null>(null)
 
   useEffect(() => {
     if (!user) return
     setDraft({
       name: draft.name || user.name,
-      email: draft.email || user.email,
       phone: draft.phone || user.phone,
       phoneVerified: draft.phoneVerified || Boolean(user.phone),
     })
     // Chỉ điền khi phiên đăng nhập thay đổi.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  if (quoted?.location.openingSoon) {
+    return (
+      <div className="wrap page">
+        <h1>Opening soon</h1>
+        <p className="lead">{quoted.location.name} chưa nhận đặt phòng. Hãy chọn một cơ sở đang mở.</p>
+        <Link to="/co-so" className="btn btn-primary">
+          Xem cơ sở đang mở
+        </Link>
+      </div>
+    )
+  }
 
   if (!quoted) {
     return (
@@ -57,18 +70,52 @@ export function ReviewPage() {
     })
   }
 
-  const submit = () => {
+  const collectBlockers = () => {
     const next: Record<string, string> = {}
-    if (draft.name.trim().length < 2) next.name = 'Nhập họ và tên.'
-    if (!isPhone(draft.phone)) next.phone = 'Nhập số điện thoại hợp lệ.'
-    else if (!draft.phoneVerified) next.phone = 'Xác thực số điện thoại để tiếp tục.'
-    if (!isEmail(draft.email)) next.email = 'Nhập email để nhận thông tin đặt phòng.'
-    if (!draft.idFront || !draft.idBack) next.id = 'Gửi đủ ảnh mặt trước và mặt sau CCCD.'
-    if (!draft.agreed) next.agreed = 'Bạn cần đồng ý quy định đặt phòng.'
-    if (isPastSlot(draft.date, draft.time)) next.slot = 'Khung giờ này đã qua. Hãy chọn lại phòng.'
-    if (draft.promoCode && !promo.ok) next.promo = promo.message
+    const list: string[] = []
+    if (draft.name.trim().length < 2) {
+      next.name = 'Nhập họ và tên.'
+      list.push('Chưa nhập họ và tên.')
+    }
+    if (!isPhone(draft.phone)) {
+      next.phone = draft.phone.trim() ? 'Nhập số điện thoại hợp lệ.' : 'Nhập số điện thoại.'
+      list.push(draft.phone.trim() ? 'Số điện thoại chưa hợp lệ.' : 'Chưa nhập số điện thoại.')
+    } else if (!draft.phoneVerified) {
+      next.phone = 'Xác thực số điện thoại để tiếp tục.'
+      list.push('Chưa xác thực số điện thoại.')
+    }
+    if (!draft.idFront || !draft.idBack) {
+      next.id = 'Gửi đủ ảnh mặt trước và mặt sau CCCD.'
+      list.push('Chưa gửi đủ ảnh CCCD hai mặt.')
+    }
+    if (!draft.agreed) {
+      next.agreed = 'Bạn cần đồng ý quy định đặt phòng.'
+      list.push('Chưa đồng ý quy định đặt phòng.')
+    }
+    if (isPastSlot(draft.date, draft.time)) {
+      next.slot = 'Khung giờ này đã qua. Hãy chọn lại phòng.'
+      list.push('Khung giờ này đã qua. Hãy chọn lại phòng.')
+    }
+    if (draft.promoCode && !promo.ok) {
+      next.promo = promo.message
+      list.push(promo.message)
+    }
+    return { next, list }
+  }
+
+  const submit = () => {
+    const { next, list } = collectBlockers()
     setErrors(next)
-    if (Object.values(next).some(Boolean)) return
+    setBlockers(list)
+    if (list.length) {
+      setNotice('errors')
+      return
+    }
+    setNotice('policy')
+  }
+
+  const continuePay = () => {
+    setNotice(null)
     setDraft({ phone: normalizePhone(draft.phone), promoCode: draft.promoCode.trim().toUpperCase() })
     startHold()
     navigate('/thanh-toan')
@@ -127,18 +174,8 @@ export function ReviewPage() {
                   </button>
                 ) : null}
               </span>
+              <span className="hint">Thông tin nhận phòng sẽ được gửi qua SMS.</span>
               {errors.phone ? <span className="form-error">{errors.phone}</span> : null}
-            </label>
-            <label className="field">
-              Email
-              <input
-                type="email"
-                value={draft.email}
-                onChange={(event) => setDraft({ email: event.target.value })}
-                placeholder="ban@email.com"
-              />
-              <span className="hint">Thông tin nhận phòng sẽ được gửi qua SMS và email.</span>
-              {errors.email ? <span className="form-error">{errors.email}</span> : null}
             </label>
           </section>
 
@@ -213,6 +250,7 @@ export function ReviewPage() {
           <button className="btn btn-primary btn-block mobile-pay" type="submit">
             Giữ phòng & thanh toán <ArrowRight size={16} />
           </button>
+          <BlockerList items={blockers} />
           <p className="hint lock-hint mobile-pay">
             <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
           </p>
@@ -252,12 +290,68 @@ export function ReviewPage() {
             <button className="btn btn-primary btn-block desktop-pay" type="button" onClick={submit}>
               Giữ phòng & thanh toán <ArrowRight size={16} />
             </button>
+            <BlockerList items={blockers} />
             <p className="hint lock-hint desktop-pay">
               <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
             </p>
           </article>
         </aside>
       </div>
+      {notice === 'errors' ? (
+        <div className="modal-root" role="presentation" onClick={() => setNotice(null)}>
+          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="pay-block-title" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-x" onClick={() => setNotice(null)} aria-label="Đóng">
+              ×
+            </button>
+            <h2 id="pay-block-title">Chưa thể thanh toán</h2>
+            <p>Hoàn tất các mục sau rồi bấm lại Giữ phòng & thanh toán.</p>
+            <ul className="policy-note">
+              {blockers.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="stack-buttons">
+              <button type="button" className="btn btn-primary" onClick={() => setNotice(null)}>
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {notice === 'policy' ? (
+        <div className="modal-root" role="presentation">
+          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+            <h2 id="policy-title">Chính sách hoàn / hủy</h2>
+            <ul className="policy-note">
+              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
+              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
+              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
+            </ul>
+            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+            <div className="stack-buttons">
+              <button type="button" className="btn btn-primary" onClick={continuePay}>
+                Tiếp tục thanh toán
+              </button>
+              <button type="button" className="btn btn-line" onClick={() => setNotice(null)}>
+                Hủy đặt phòng
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function BlockerList({ items }: { items: string[] }) {
+  if (!items.length) return null
+  return (
+    <div className="pay-blockers" role="alert">
+      {items.map((item) => (
+        <p className="form-error" key={item}>
+          {item}
+        </p>
+      ))}
     </div>
   )
 }

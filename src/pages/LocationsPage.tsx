@@ -103,7 +103,16 @@ export function LocationsPage() {
             <div className="loc-grid">
               {results.map((location) => (
                 <article key={location.id} className="loc-card">
-                  <Photo src={location.cover} alt={location.name} />
+                  {location.openingSoon ? (
+                    <span className="soon-frame">
+                      <Photo src={location.cover} alt={location.name} />
+                      <span className="soon-badge">
+                        <i /> Opening soon
+                      </span>
+                    </span>
+                  ) : (
+                    <Photo src={location.cover} alt={location.name} />
+                  )}
                   <div className="loc-body">
                     <div className="loc-title">
                       <h2>{location.name}</h2>
@@ -116,17 +125,27 @@ export function LocationsPage() {
                     </p>
                     <AmenityList items={location.amenities} />
                     <div className="loc-foot">
-                      <span>
-                        Từ <b className="price">{formatMoney(priceFrom(location.id))}</b>
-                        <small> / 3 giờ</small>
-                      </span>
+                      {location.openingSoon ? (
+                        <span>Chưa nhận đặt phòng</span>
+                      ) : (
+                        <span>
+                          Từ <b className="price">{formatMoney(priceFrom(location.id))}</b>
+                          <small> / 3 giờ</small>
+                        </span>
+                      )}
                       <div>
-                        <Link to={`/co-so/${location.id}`} className="text-btn">
-                          Chi tiết cơ sở <ArrowRight size={15} />
-                        </Link>
-                        <Link to={`/co-so/${location.id}/chon-phong`} className="btn btn-primary btn-sm">
-                          Xem phòng trống <ArrowRight size={15} />
-                        </Link>
+                        {location.openingSoon ? (
+                          <span className="soon-cta">Sắp mở cửa...</span>
+                        ) : (
+                          <>
+                            <Link to={`/co-so/${location.id}`} className="text-btn">
+                              Chi tiết cơ sở <ArrowRight size={15} />
+                            </Link>
+                            <Link to={`/co-so/${location.id}/chon-phong`} className="btn btn-primary btn-sm">
+                              Xem phòng trống <ArrowRight size={15} />
+                            </Link>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

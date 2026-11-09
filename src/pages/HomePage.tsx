@@ -6,8 +6,9 @@ import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
-import { LogoMark, useTitle } from '../components/ui'
-import { checkoutLabel, formatMoney, overnightStay, todayISO } from '../utils'
+import { useTitle } from '../components/ui'
+import { LogoStacked } from '../components/brandLogo'
+import { checkoutLabel, formatMoney, overnightStay, stayHours, todayISO } from '../utils'
 
 export function HomePage() {
   useTitle('Kabin')
@@ -27,6 +28,12 @@ export function HomePage() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (!location.openingSoon) return
+    const open = LOCATIONS.find((item) => !item.openingSoon)
+    if (open) setDraft({ locationId: open.id, roomId: '' })
+  }, [location.openingSoon, location.id, setDraft])
 
   const backToBooking = () => {
     const card = document.getElementById('dat-phong')
@@ -76,8 +83,8 @@ export function HomePage() {
                 onChange={(event) => setDraft({ locationId: event.target.value, roomId: '' })}
               >
                 {LOCATIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
+                  <option key={item.id} value={item.id} disabled={item.openingSoon}>
+                    {item.openingSoon ? `${item.name} · Opening soon` : item.name}
                   </option>
                 ))}
               </select>
@@ -122,11 +129,21 @@ export function HomePage() {
                 />
               </span>
             </div>
+            <div className="control search-checkout">
+              <Clock size={18} />
+              <TimeField
+                label="Giờ trả phòng"
+                value={draft.checkoutTime}
+                align="end"
+                onChange={(checkoutTime) =>
+                  setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
+                }
+              />
+            </div>
             <button className="btn btn-primary" type="submit">
               Xem phòng trống <ArrowRight size={18} />
             </button>
           </div>
-          <p className="hint">Chọn phòng trước, thanh toán ở bước tiếp theo.</p>
         </form>
 
       <section className="section">
@@ -180,21 +197,45 @@ export function HomePage() {
           ))}
         </div>
         <div className="place-grid">
-          {places.map((place) => (
-            <Link key={place.id} to={`/co-so/${place.id}`} className="place-card">
-              <img src={place.cover} alt={place.name} />
-              <div>
-                <h3>{place.name.replace('Kabin ', '')}</h3>
-                <p>
-                  <MapPin size={14} /> {place.district} · {place.city}
-                </p>
-                <p>{place.blurb}</p>
-                <span className="text-btn">
-                  Xem cơ sở <ArrowRight size={16} />
-                </span>
-              </div>
-            </Link>
-          ))}
+          {places.map((place) => {
+            const body = (
+              <>
+                {place.openingSoon ? (
+                  <span className="soon-frame">
+                    <img src={place.cover} alt={place.name} />
+                    <span className="soon-badge">
+                      <i /> Opening soon
+                    </span>
+                  </span>
+                ) : (
+                  <img src={place.cover} alt={place.name} />
+                )}
+                <div>
+                  <h3>{place.name.replace('Kabin ', '')}</h3>
+                  <p>
+                    <MapPin size={14} /> {place.district} · {place.city}
+                  </p>
+                  <p>{place.blurb}</p>
+                  {place.openingSoon ? (
+                    <span className="soon-cta">Sắp mở cửa...</span>
+                  ) : (
+                    <span className="text-btn">
+                      Xem cơ sở <ArrowRight size={16} />
+                    </span>
+                  )}
+                </div>
+              </>
+            )
+            return place.openingSoon ? (
+              <article key={place.id} className="place-card soon" aria-disabled="true">
+                {body}
+              </article>
+            ) : (
+              <Link key={place.id} to={`/co-so/${place.id}`} className="place-card">
+                {body}
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -222,13 +263,7 @@ export function HomePage() {
           </article>
           <article className="brand-card here">
             <div className="brand-logo kabin">
-              <span className="brand-lockup">
-                <LogoMark className="logo-mark" />
-                <span className="logo-word">
-                  <span className="logo-name">KABIN</span>
-                  <span className="logo-sub">STAYS</span>
-                </span>
-              </span>
+              <LogoStacked />
             </div>
             <div>
               <p className="kicker">Self check-in</p>
@@ -340,7 +375,7 @@ export function HomePage() {
           <Step n="03" title="Nhận mã vào phòng" text="Xác nhận thành công, nhận mã cổng và phòng." />
         </div>
         <div className="cta-foot">
-          <p className="hint">Thông tin đặt phòng được gửi qua SMS và email.</p>
+          <p className="hint">Thông tin đặt phòng được gửi qua SMS.</p>
           <div className="cta-actions">
             <button type="button" className="btn btn-primary" onClick={() => submit()}>
               Xem phòng trống <ArrowRight size={16} />

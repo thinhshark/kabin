@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
 import { getLocation, getRoom, roomAmenities } from '../data'
 import { useStore } from '../store'
@@ -22,6 +22,7 @@ export function RoomDetailPage() {
     if (draft.date < today) setDraft({ date: today })
   }, [draft.date, setDraft, today])
 
+  if (location?.openingSoon) return <Navigate to="/co-so" replace />
   if (!location || !room || room.locationId !== location.id) {
     return (
       <div className="wrap page">
@@ -77,6 +78,19 @@ export function RoomDetailPage() {
       <div className="detail room-detail">
         <Gallery photos={room.photos} alt={`Phòng ${room.number}`} />
         <aside className="book-widget">
+          {location.openingSoon ? (
+            <div className="soon-panel">
+              <span className="soon-badge">
+                <i /> Opening soon
+              </span>
+              <h2>Phòng này chưa mở đặt</h2>
+              <p>Kabin Tây Hồ sắp mở cửa, nên phòng chưa thể giữ hoặc thanh toán.</p>
+              <Link to="/co-so" className="btn btn-primary btn-block">
+                Xem cơ sở đang mở
+              </Link>
+            </div>
+          ) : (
+            <>
           <h2>Thông tin đặt phòng</h2>
           <div className="split-2">
             <label className="field">
@@ -151,6 +165,8 @@ export function RoomDetailPage() {
             Tiếp tục đặt phòng <ArrowRight size={16} />
           </button>
           <p className="hint">Kiểm tra thông tin trước khi thanh toán.</p>
+            </>
+          )}
         </aside>
         <div className="detail-copy">
           <h2>Một căn phòng ấm cúng cho khoảng nghỉ riêng tư của bạn.</h2>

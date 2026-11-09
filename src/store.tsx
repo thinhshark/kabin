@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { DEMO_PHONE, DEMO_USER, quoteOf, SEED_BOOKINGS, type Booking } from './data'
-import { checkoutLabel, normalizePhone, todayISO } from './utils'
+import { checkoutLabel, isPastSlot, nextBookableSlot, normalizePhone, overnightStay, todayISO } from './utils'
 
 export type User = {
   name: string
@@ -157,6 +157,7 @@ type Store = {
   markLate: () => void
   resetHold: () => void
   setLookupPhone: (phone: string) => void
+  cancelBooking: (code: string) => void
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -176,6 +177,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const pushBooking = (booking: Booking) => {
     setBookings((list) => (list.some((item) => item.code === booking.code) ? list : [booking, ...list]))
   }
+
+  useEffect(() => {
+    setDraftState((current) => {
+      if (!isPastSlot(current.date, current.time)) return current
+      const slot = nextBookableSlot()
+      if (current.overnight) return { ...current, date: slot.date, time: slot.time, ...overnightStay(slot.time) }
+      return {
+        ...current,
+        date: slot.date,
+        time: slot.time,
+        checkoutTime: checkoutLabel(slot.time, current.duration).time,
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const payload: Persisted = { user, bookings, draft, lookupPhone }
@@ -341,6 +356,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         roomCode: '',
       })),
     setLookupPhone,
+    cancelBooking: (code) => {
+      setBookings((list) =>
+        list.map((item) => (item.code === code ? { ...item, status: 'cancelled', gateCode: '', roomCode: '' } : item)),
+      )
+      setToast('Đã hủy phòng')
+    },
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

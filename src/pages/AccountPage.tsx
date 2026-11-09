@@ -3,14 +3,13 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { BadgeCheck, CalendarDays, ChevronRight, Headphones, LogOut, Tag } from 'lucide-react'
 import { useStore } from '../store'
 import { AccountNav, useTitle } from '../components/ui'
-import { initials, isEmail, isPhone, maskPhone, normalizePhone } from '../utils'
+import { initials, isPhone, maskPhone, normalizePhone } from '../utils'
 
 export function AccountPage() {
   useTitle('Tài khoản')
   const { user, updateUser, logout, openOtp, showToast } = useStore()
   const navigate = useNavigate()
   const [name, setName] = useState(user?.name ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
   const [nextPhone, setNextPhone] = useState('')
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
@@ -21,11 +20,7 @@ export function AccountPage() {
       setError('Nhập họ và tên.')
       return
     }
-    if (email && !isEmail(email)) {
-      setError('Email chưa đúng định dạng.')
-      return
-    }
-    updateUser({ name: name.trim(), email: email.trim() })
+    updateUser({ name: name.trim() })
     setError('')
     showToast('Đã lưu thay đổi')
   }
@@ -90,11 +85,7 @@ export function AccountPage() {
                 </span>
               )}
             </label>
-            <label className="field">
-              Email
-              <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ban@email.com" />
-              <span className="hint">Thông tin đặt phòng được gửi qua SMS và email.</span>
-            </label>
+            <p className="hint">Thông tin đặt phòng được gửi qua SMS.</p>
             {error ? <p className="form-error">{error}</p> : null}
             <button type="button" className="btn btn-primary btn-block" onClick={save}>
               Lưu thay đổi

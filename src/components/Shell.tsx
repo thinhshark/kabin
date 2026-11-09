@@ -95,7 +95,7 @@ export function Shell() {
         <div className="footer-inner">
           <div className="footer-brand">
             <Logo />
-            <p className="footer-note">Kabin là một phần trong hệ sinh thái T-Box.</p>
+            <p className="footer-note">Created by T-Box.</p>
           </div>
           <nav aria-label="Chân trang">
             <Link to="/dieu-khoan">Điều khoản & Sử dụng</Link>
