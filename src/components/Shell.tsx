@@ -98,6 +98,7 @@ export function Shell() {
             <p className="footer-note">Created by T-Box.</p>
           </div>
           <nav aria-label="Chân trang">
+            <Link to="/bang-gia" className="price-list-link">Xem bảng giá</Link>
             <Link to="/dieu-khoan">Điều khoản & Sử dụng</Link>
             <Link to="/chinh-sach">Chính sách</Link>
             <Link to="/tro-giup">Câu hỏi thường gặp</Link>

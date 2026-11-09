@@ -3,14 +3,19 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react'
 import { quoteOf } from '../data'
 import { useStore } from '../store'
+import { PriceListLink } from '../components/PriceList'
 import { Photo, Stepper, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
 
 export function ReviewPage() {
   useTitle('Kiểm tra đặt phòng')
   const { draft, setDraft, user, openOtp, showToast, startHold } = useStore()
   const navigate = useNavigate()
-  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode)
+  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode, {
+    date: draft.date,
+    time: draft.time,
+    overnight: draft.overnight,
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [blockers, setBlockers] = useState<string[]>([])
   const [notice, setNotice] = useState<'errors' | 'policy' | null>(null)
@@ -283,7 +288,7 @@ export function ReviewPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {draft.duration} giờ
+                {durationText(draft.duration)}
               </li>
             </ul>
             <PayLines base={base} discount={discount} total={total} />
@@ -445,7 +450,10 @@ function PayLines({ base, discount, total }: { base: number; discount: number; t
       </div>
       <div className="sum-row total">
         <span>Tổng thanh toán</span>
-        <b className="price">{formatMoney(total)}</b>
+        <span className="price-stack">
+          <b className="price">{formatMoney(total)}</b>
+          <PriceListLink />
+        </span>
       </div>
     </div>
   )

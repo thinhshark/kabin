@@ -298,7 +298,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     confirmPaid: () => {
       const current = draftRef.current
-      const quoted = quoteOf(current.roomId, current.duration, current.promoCode)
+      const quoted = quoteOf(current.roomId, current.duration, current.promoCode, {
+        date: current.date,
+        time: current.time,
+        overnight: current.overnight,
+      })
       pushBooking({
         id: current.bookingCode,
         code: current.bookingCode,
@@ -323,7 +327,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     expireHold: () => setDraftState((current) => ({ ...current, phase: 'expired', holdUntil: null })),
     markLate: () => {
       const current = draftRef.current
-      const quoted = quoteOf(current.roomId, current.duration, current.promoCode)
+      const quoted = quoteOf(current.roomId, current.duration, current.promoCode, {
+        date: current.date,
+        time: current.time,
+        overnight: current.overnight,
+      })
       const code = current.bookingCode || codeFrom(current.date)
       pushBooking({
         id: code,

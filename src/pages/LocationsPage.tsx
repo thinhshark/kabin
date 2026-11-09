@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin, SlidersHorizontal } from 'lucide-react'
 import { DISTRICTS, FILTER_AMENITIES, LOCATIONS, priceFrom, type Amenity } from '../data'
+import { PriceListLink } from '../components/PriceList'
 import { AmenityList, Photo, useTitle } from '../components/ui'
 import { cx, formatMoney } from '../utils'
 
@@ -128,9 +129,12 @@ export function LocationsPage() {
                       {location.openingSoon ? (
                         <span>Chưa nhận đặt phòng</span>
                       ) : (
-                        <span>
-                          Từ <b className="price">{formatMoney(priceFrom(location.id))}</b>
-                          <small> / 3 giờ</small>
+                        <span className="price-stack">
+                          <span>
+                            Từ <b className="price">{formatMoney(priceFrom(location.id))}</b>
+                            <small> / 3 giờ</small>
+                          </span>
+                          <PriceListLink />
                         </span>
                       )}
                       <div>

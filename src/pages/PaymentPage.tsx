@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Download, RefreshCw, Timer } from 'lucide-react'
 import { quoteOf } from '../data'
 import { useStore } from '../store'
+import { PriceListLink } from '../components/PriceList'
 import { CopyButton, DemoQr, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney } from '../utils'
 
 export function PaymentPage() {
   useTitle('Thanh toán')
@@ -12,7 +13,11 @@ export function PaymentPage() {
   const navigate = useNavigate()
   const [now, setNow] = useState(Date.now())
   const [checking, setChecking] = useState(false)
-  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode)
+  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode, {
+    date: draft.date,
+    time: draft.time,
+    overnight: draft.overnight,
+  })
 
   useEffect(() => {
     if (draft.phase === 'paid') navigate(`/ve/${draft.bookingCode}`, { replace: true })
@@ -146,7 +151,7 @@ export function PaymentPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {draft.duration} giờ
+                {durationText(draft.duration)}
               </li>
             </ul>
             <div className="sum-row">
@@ -161,7 +166,10 @@ export function PaymentPage() {
             ) : null}
             <div className="sum-row total">
               <span>Tổng thanh toán</span>
-              <b className="price">{formatMoney(total)}</b>
+              <span className="price-stack">
+                <b className="price">{formatMoney(total)}</b>
+                <PriceListLink />
+              </span>
             </div>
             <div className="sum-row">
               <span>Mã booking</span>

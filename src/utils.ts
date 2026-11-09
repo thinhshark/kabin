@@ -29,10 +29,6 @@ export function formatMoney(n: number) {
   return new Intl.NumberFormat('vi-VN').format(n) + 'đ'
 }
 
-export function slotPrice(price3h: number, hours: number) {
-  return Math.round((price3h / 3) * hours / 1000) * 1000
-}
-
 export function clockMinutes(value: string) {
   const [h = 0, m = 0] = value.split(':').map(Number)
   return h * 60 + m
@@ -44,7 +40,26 @@ export function stayHours(start: string, end: string) {
   return diff / 60
 }
 
+export const FULL_DAY_HOURS = 24
 export const OVERNIGHT_CHECKOUT = '09:00'
+
+export function fullDayStay(start: string) {
+  return {
+    overnight: false,
+    checkoutTime: start,
+    duration: FULL_DAY_HOURS,
+  }
+}
+
+export function durationText(hours: number) {
+  if (hours === FULL_DAY_HOURS) return 'Full 24 tiếng'
+  const minutes = Math.round(hours * 60)
+  const whole = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (!rest) return `${whole} giờ`
+  if (!whole) return `${rest} phút`
+  return `${whole} giờ ${rest} phút`
+}
 
 export function overnightStay(start: string) {
   return {

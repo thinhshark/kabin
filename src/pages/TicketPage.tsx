@@ -4,7 +4,7 @@ import { BadgeCheck, MapPin, Phone, ScrollText } from 'lucide-react'
 import { displayStatus, getLocation, getRoom } from '../data'
 import { useStore } from '../store'
 import { CopyButton, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, mapsUrl, maskPhone } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney, mapsUrl, maskPhone } from '../utils'
 
 export function TicketPage() {
   const { code = '' } = useParams()
@@ -99,7 +99,7 @@ export function TicketPage() {
             </li>
             <li>
               <span>Thời lượng</span>
-              {booking.duration} giờ
+              {durationText(booking.duration)}
             </li>
           </ul>
         </article>

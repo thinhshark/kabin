@@ -1,18 +1,19 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
-import { getLocation, roomAmenities, roomsAt, TIMES } from '../data'
+import { getLocation, quotedStay, roomAmenities, roomTaken, roomsAt, TIMES } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
+import { PriceListLink } from '../components/PriceList'
 import { Accordion, AmenityList, Crumb, Gallery, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isPastSlot, mapsUrl, overnightStay, stayHours, todayISO } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney, isPastSlot, mapsUrl, overnightStay, stayHours, todayISO } from '../utils'
 
 export function LocationDetailPage() {
   const { id = '' } = useParams()
   const location = getLocation(id)
   useTitle(location?.name ?? 'Cơ sở')
-  const { draft, setDraft } = useStore()
+  const { draft, setDraft, bookings } = useStore()
   const navigate = useNavigate()
   if (location?.openingSoon) return <Navigate to="/co-so" replace />
   if (!location) {
@@ -123,6 +124,7 @@ export function LocationDetailPage() {
                   label="Giờ trả phòng"
                   value={draft.checkoutTime}
                   align="end"
+                  suffix={end.nextDay ? 'hôm sau' : undefined}
                   onChange={(checkoutTime) =>
                     setDraft({
                       locationId: location.id,
@@ -168,7 +170,15 @@ export function LocationDetailPage() {
             </span>
           </div>
           <div className="stack">
-            {rooms.map((room) => (
+            {rooms.map((room) => {
+              const taken = roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)
+              const price = quotedStay(room, {
+                date: draft.date,
+                time: draft.time,
+                duration: draft.duration,
+                overnight: draft.overnight,
+              })
+              return (
               <article key={room.id} className="mini-room">
                 <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
                 <div>
@@ -176,14 +186,17 @@ export function LocationDetailPage() {
                     Phòng {room.number} · {room.type}
                   </strong>
                   <p>{roomAmenities(room).join(' · ')}</p>
-                  <span className={location.openingSoon ? 'pill pill-pending' : 'pill pill-upcoming'}>
-                    {location.openingSoon ? 'Opening soon' : 'Còn trống'}
+                  <span className={location.openingSoon ? 'pill pill-pending' : taken ? 'pill pill-expired' : 'pill pill-upcoming'}>
+                    {location.openingSoon ? 'Opening soon' : taken ? 'Đã có khách' : 'Còn trống'}
                   </span>
                 </div>
                 <div className="mini-room-end">
-                  <b className="price">
-                    {formatMoney(room.price3h)} <small>/ 3 giờ</small>
-                  </b>
+                  <span className="price-stack">
+                    <b className="price">
+                      {formatMoney(price)} <small>/ {draft.overnight ? 'Qua đêm' : durationText(draft.duration)}</small>
+                    </b>
+                    <PriceListLink />
+                  </span>
                   {location.openingSoon ? (
                     <span className="btn btn-line btn-sm soon-disabled">Opening soon</span>
                   ) : (
@@ -193,7 +206,8 @@ export function LocationDetailPage() {
                   )}
                 </div>
               </article>
-            ))}
+              )
+            })}
           </div>
           <Accordion
             items={[

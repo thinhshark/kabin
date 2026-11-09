@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin, SlidersHorizontal } from 'lucide-react'
-import { FILTER_AMENITIES, getLocation, LOCATIONS, ROOMS, roomAmenities, roomsAt, type Amenity, type Room } from '../data'
+import { FILTER_AMENITIES, getLocation, LOCATIONS, quotedStay, ROOMS, roomAmenities, roomTaken, roomsAt, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
+import { PriceListLink } from '../components/PriceList'
 import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { AmenityIcon, Crumb, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, cx, formatMoney, isPastSlot, overnightStay, slotPrice, stayHours, todayISO } from '../utils'
+import { checkoutLabel, cx, durationText, formatMoney, FULL_DAY_HOURS, fullDayStay, isPastSlot, overnightStay, stayHours, todayISO } from '../utils'
 
 export function SelectRoomPage() {
   const { id = '' } = useParams()
   const location = getLocation(id)
   useTitle('Chọn phòng')
-  const { draft, setDraft, showToast } = useStore()
+  const { draft, setDraft, showToast, bookings } = useStore()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const typeFilter = params.get('loai') ?? ''
@@ -29,27 +30,29 @@ export function SelectRoomPage() {
 
   const end = checkoutLabel(draft.time, draft.duration)
   const past = isPastSlot(draft.date, draft.time)
-  const stayLabel = draft.overnight ? 'Qua đêm' : hoursLabel(draft.duration)
+  const stayLabel = draft.overnight ? 'Qua đêm' : durationText(draft.duration)
+  const stay = { date: draft.date, time: draft.time, duration: draft.duration, overnight: draft.overnight }
+  const free = (room: Room) => room.available && !roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)
 
   const { here, elsewhere } = useMemo(() => {
     if (!location) return { here: [] as Room[], elsewhere: [] as Room[] }
     const matches = (room: Room) => {
       if (typeFilter && room.type !== typeFilter) return false
-      if (onlyOpen && !room.available) return false
+      if (onlyOpen && !free(room)) return false
       return amenities.every((item) => roomAmenities(room).includes(item))
     }
     const byChoice = (a: Room, b: Room) => {
-      if (sort === 'desc') return b.price3h - a.price3h
-      return a.price3h - b.price3h
+      const diff = quotedStay(a, stay) - quotedStay(b, stay)
+      return sort === 'desc' ? -diff : diff
     }
     const hereRooms = roomsAt(location.id).filter(matches)
     hereRooms.sort((a, b) => {
-      if (a.available !== b.available) return a.available ? -1 : 1
+      if (free(a) !== free(b)) return free(a) ? -1 : 1
       return byChoice(a, b)
     })
     const otherRooms = ROOMS.filter((room) => {
       const place = getLocation(room.locationId)
-      return room.locationId !== location.id && !place?.openingSoon && room.available && matches(room)
+      return room.locationId !== location.id && !place?.openingSoon && free(room) && matches(room)
     })
     otherRooms.sort((a, b) => {
       const distance = (getLocation(a.locationId)?.distance ?? 0) - (getLocation(b.locationId)?.distance ?? 0)
@@ -57,7 +60,7 @@ export function SelectRoomPage() {
       return byChoice(a, b)
     })
     return { here: hereRooms, elsewhere: otherRooms }
-  }, [location, typeFilter, onlyOpen, amenities, sort])
+  }, [location, typeFilter, onlyOpen, amenities, sort, draft.date, draft.time, draft.duration, draft.overnight, bookings])
 
   if (!location) {
     return (
@@ -68,7 +71,7 @@ export function SelectRoomPage() {
     )
   }
 
-  const openCount = here.filter((room) => room.available).length + elsewhere.length
+  const openCount = here.filter((room) => free(room)).length + elsewhere.length
 
   if (location.openingSoon) return <Navigate to="/co-so" replace />
 
@@ -133,7 +136,13 @@ export function SelectRoomPage() {
             label="Giờ nhận phòng"
             value={draft.time}
             onChange={(time) =>
-              setDraft(draft.overnight ? { time, ...overnightStay(time) } : { time, duration: stayHours(time, draft.checkoutTime) })
+              setDraft(
+                draft.overnight
+                  ? { time, ...overnightStay(time) }
+                  : draft.duration === FULL_DAY_HOURS
+                    ? { time, ...fullDayStay(time) }
+                    : { time, duration: stayHours(time, draft.checkoutTime) },
+              )
             }
           />
         </div>
@@ -155,6 +164,7 @@ export function SelectRoomPage() {
             label="Giờ trả phòng"
             value={draft.checkoutTime}
             align="end"
+            suffix={end.nextDay ? 'hôm sau' : undefined}
             onChange={(checkoutTime) =>
               setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
             }
@@ -234,7 +244,8 @@ export function SelectRoomPage() {
                     key={room.id}
                     room={room}
                     stayLabel={stayLabel}
-                    price={slotPrice(room.price3h, draft.duration)}
+                    price={quotedStay(room, stay)}
+                    taken={roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)}
                     past={past}
                     onOpen={(placeId) => {
                       setDraft({ locationId: placeId, roomId: room.id })
@@ -253,7 +264,8 @@ export function SelectRoomPage() {
                     key={room.id}
                     room={room}
                     stayLabel={stayLabel}
-                    price={slotPrice(room.price3h, draft.duration)}
+                    price={quotedStay(room, stay)}
+                    taken={roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)}
                     past={past}
                     onOpen={(placeId) => {
                       setDraft({ locationId: placeId, roomId: room.id })
@@ -283,17 +295,20 @@ function RoomChoice({
   stayLabel,
   price,
   past,
+  taken,
   onOpen,
 }: {
   room: Room
   stayLabel: string
   price: number
   past: boolean
+  taken: boolean
   onOpen: (locationId: string) => void
 }) {
   const place = getLocation(room.locationId)
+  const open = room.available && !taken
   return (
-    <article className={cx('room-row', !room.available && 'off')}>
+    <article className={cx('room-row', !open && 'off')}>
       <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
       <div>
         <h2>
@@ -310,24 +325,26 @@ function RoomChoice({
             </span>
           ))}
         </p>
-        {room.available ? (
+        {open ? (
           <span className="pill pill-upcoming">Còn trống</span>
         ) : (
-          <span className="pill pill-expired">Không khả dụng trong khung giờ này</span>
+          <span className="pill pill-expired">{taken ? 'Đã có khách trong khung giờ này' : 'Không khả dụng trong khung giờ này'}</span>
         )}
       </div>
       <div className="room-row-end">
-        <b className="price">
-          <small>chỉ từ </small>
-          {formatMoney(price)} <small>/ {stayLabel}</small>
-        </b>
-        {room.available ? (
+        <span className="price-stack">
+          <b className="price">
+            {formatMoney(price)} <small>/ {stayLabel}</small>
+          </b>
+          <PriceListLink />
+        </span>
+        {open ? (
           <button type="button" className="btn btn-primary" disabled={past} onClick={() => onOpen(room.locationId)}>
             Xem phòng <ArrowRight size={16} />
           </button>
         ) : (
           <button type="button" className="btn btn-muted" disabled>
-            Không khả dụng
+            {taken ? 'Đã có khách' : 'Không khả dụng'}
           </button>
         )}
       </div>
@@ -335,11 +352,3 @@ function RoomChoice({
   )
 }
 
-function hoursLabel(hours: number) {
-  const minutes = Math.round(hours * 60)
-  const whole = Math.floor(minutes / 60)
-  const rest = minutes % 60
-  if (!rest) return `${whole} giờ`
-  if (!whole) return `${rest} phút`
-  return `${whole} giờ ${rest} phút`
-}

@@ -3,13 +3,17 @@ import { Home, Headphones, RefreshCw } from 'lucide-react'
 import { quoteOf } from '../data'
 import { useStore } from '../store'
 import { Photo, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, maskPhone } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney, maskPhone } from '../utils'
 
 export function ExpiredPage() {
   useTitle('Hết thời gian giữ phòng')
   const { draft, resetHold, markLate } = useStore()
   const navigate = useNavigate()
-  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode)
+  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode, {
+    date: draft.date,
+    time: draft.time,
+    overnight: draft.overnight,
+  })
   const end = checkoutLabel(draft.time, draft.duration)
 
   return (
@@ -45,7 +49,7 @@ export function ExpiredPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {draft.duration} giờ
+                {durationText(draft.duration)}
               </li>
             </ul>
             <div className="sum-row">
@@ -92,7 +96,11 @@ export function ExpiredPage() {
 export function LatePage() {
   useTitle('Thanh toán đến muộn')
   const { draft } = useStore()
-  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode)
+  const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode, {
+    date: draft.date,
+    time: draft.time,
+    overnight: draft.overnight,
+  })
   const end = checkoutLabel(draft.time, draft.duration)
 
   return (
@@ -126,7 +134,7 @@ export function LatePage() {
               Phòng {quoted.room.number} · {quoted.room.type}
             </p>
             <p>
-              {formatDate(draft.date)} · {draft.time}–{end.text} ({draft.duration} giờ)
+              {formatDate(draft.date)} · {draft.time}–{end.text} ({durationText(draft.duration)})
             </p>
           </div>
         </article>

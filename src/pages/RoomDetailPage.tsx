@@ -1,13 +1,14 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { getLocation, getRoom, roomAmenities } from '../data'
+import { getLocation, getRoom, quotedStay, roomAmenities, roomTaken } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
+import { PriceListLink } from '../components/PriceList'
 import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { Accordion, AmenityList, Crumb, Gallery, useTitle } from '../components/ui'
-import { clockMinutes, formatDate, formatMoney, isPastSlot, overnightStay, slotPrice, stayHours, todayISO } from '../utils'
+import { clockMinutes, durationText, formatDate, formatMoney, FULL_DAY_HOURS, fullDayStay, isPastSlot, overnightStay, stayHours, todayISO } from '../utils'
 
 export function RoomDetailPage() {
   const { id = '', roomId = '' } = useParams()
@@ -34,16 +35,15 @@ export function RoomDetailPage() {
 
   const nextDay = clockMinutes(draft.checkoutTime) <= clockMinutes(draft.time)
   const past = isPastSlot(draft.date, draft.time)
-  const conflict =
-    !room.available ||
-    bookings.some(
-      (booking) =>
-        booking.roomId === room.id &&
-        (booking.status === 'upcoming' || booking.status === 'active' || booking.status === 'pending') &&
-        overlaps(draft.date, draft.time, draft.duration, booking),
-    )
-  const price = slotPrice(room.price3h, draft.duration)
-  const stayLabel = draft.overnight ? 'Qua đêm' : hoursLabel(draft.duration)
+  const taken = roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)
+  const conflict = !room.available || taken
+  const price = quotedStay(room, {
+    date: draft.date,
+    time: draft.time,
+    duration: draft.duration,
+    overnight: draft.overnight,
+  })
+  const stayLabel = draft.overnight ? 'Qua đêm' : durationText(draft.duration)
   const blocked = conflict || past
 
   return (
@@ -64,7 +64,7 @@ export function RoomDetailPage() {
           <p className="meta-line">
             {location.name} · {location.city}
             {conflict ? (
-              <span className="pill pill-expired">Không khả dụng</span>
+              <span className="pill pill-expired">{taken ? 'Đã có khách' : 'Không khả dụng'}</span>
             ) : (
               <span className="pill pill-upcoming">Còn trống trong khung giờ đã chọn</span>
             )}
@@ -109,7 +109,13 @@ export function RoomDetailPage() {
                   label="Giờ nhận phòng"
                   value={draft.time}
                   onChange={(time) =>
-                    setDraft(draft.overnight ? { time, ...overnightStay(time) } : { time, duration: stayHours(time, draft.checkoutTime) })
+                    setDraft(
+                      draft.overnight
+                        ? { time, ...overnightStay(time) }
+                        : draft.duration === FULL_DAY_HOURS
+                          ? { time, ...fullDayStay(time) }
+                          : { time, duration: stayHours(time, draft.checkoutTime) },
+                    )
                   }
                 />
               </span>
@@ -137,6 +143,7 @@ export function RoomDetailPage() {
                   label="Giờ trả phòng"
                   value={draft.checkoutTime}
                   align="end"
+                  suffix={nextDay ? 'hôm sau' : undefined}
                   onChange={(checkoutTime) =>
                     setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
                   }
@@ -147,12 +154,16 @@ export function RoomDetailPage() {
           <p className="hint">Trả phòng lúc {draft.checkoutTime}{nextDay ? ' hôm sau' : ''}</p>
           <div className="sum-row total">
             <span>Tổng tiền</span>
-            <b className="price">
-              {formatMoney(price)} <small>/ {stayLabel}</small>
-            </b>
+            <span className="price-stack">
+              <b className="price">
+                {formatMoney(price)} <small>/ {stayLabel}</small>
+              </b>
+              <PriceListLink />
+            </span>
           </div>
           {past ? <p className="form-error">Khung giờ này đã qua.</p> : null}
-          {!past && conflict ? <p className="form-error">khung giờ này hiện không khả dụng</p> : null}
+          {!past && taken ? <p className="form-error">Khung giờ này đã có khách. Hãy chọn giờ khác hoặc phòng khác.</p> : null}
+          {!past && !taken && !room.available ? <p className="form-error">Phòng này hiện không nhận đặt.</p> : null}
           <button
             type="button"
             className="btn btn-primary btn-block"
@@ -178,7 +189,7 @@ export function RoomDetailPage() {
                 title: 'Tiện ích trong phòng',
                 content: (
                   <p>
-                    {roomAmenities(room).join(', ')}. Giá {formatMoney(price)} cho {draft.duration} giờ, ngày {formatDate(draft.date)}.
+                    {roomAmenities(room).join(', ')}. Giá {formatMoney(price)} cho {durationText(draft.duration)}, ngày {formatDate(draft.date)}.
                   </p>
                 ),
               },
@@ -198,25 +209,3 @@ export function RoomDetailPage() {
   )
 }
 
-function overlaps(
-  date: string,
-  time: string,
-  hours: number,
-  booking: { date: string; time: string; duration: number },
-) {
-  const startOf = (day: string, clock: string) => new Date(`${day}T00:00:00`).getTime() + clockMinutes(clock) * 60000
-  const start = startOf(date, time)
-  const end = start + hours * 3600000
-  const bookedStart = startOf(booking.date, booking.time)
-  const bookedEnd = bookedStart + booking.duration * 3600000
-  return start < bookedEnd && bookedStart < end
-}
-
-function hoursLabel(hours: number) {
-  const minutes = Math.round(hours * 60)
-  const whole = Math.floor(minutes / 60)
-  const rest = minutes % 60
-  if (!rest) return `${whole} giờ`
-  if (!whole) return `${rest} phút`
-  return `${whole} giờ ${rest} phút`
-}

@@ -1,4 +1,5 @@
-import { asset, formatMoney, shiftISO, slotPrice, todayISO } from './utils'
+import { asset, clockMinutes, formatMoney, shiftISO, todayISO } from './utils'
+import { listedFrom, listedHourly, listedOvernight, type RateBand } from './priceList'
 
 export type Amenity =
   | 'Máy chiếu'
@@ -287,9 +288,9 @@ export function roomAmenities(room: Room): Amenity[] {
 }
 
 export const ROOM_TYPES: Array<{ type: Room['type']; priceFrom: number; amenities: string; photo: string }> = [
-  { type: 'Cozy', priceFrom: 199000, amenities: '', photo: PHOTOS.cozy },
-  { type: 'Cinema', priceFrom: 249000, amenities: 'Máy chiếu', photo: PHOTOS.cinema },
-  { type: 'Relax', priceFrom: 299000, amenities: 'Bồn tắm', photo: PHOTOS.relax },
+  { type: 'Cozy', priceFrom: listedFrom('lake'), amenities: '', photo: PHOTOS.cozy },
+  { type: 'Cinema', priceFrom: listedFrom('lake'), amenities: 'Máy chiếu', photo: PHOTOS.cinema },
+  { type: 'Relax', priceFrom: listedFrom('bath'), amenities: 'Bồn tắm', photo: PHOTOS.relax },
 ]
 
 export const PROMOS: Promo[] = [
@@ -328,7 +329,7 @@ export const FAQS: Faq[] = [
     id: 'hold',
     topic: 'Thanh toán',
     q: 'Phòng được giữ trong bao lâu?',
-    a: 'Phòng được giữ 5 phút kể từ khi tạo yêu cầu thanh toán. Hết 5 phút chưa nhận tiền, phòng được mở lại cho khách khác.',
+    a: 'Phòng được giữ 10 phút kể từ khi tạo yêu cầu thanh toán. Hết 10 phút chưa nhận tiền, phòng được mở lại cho khách khác.',
   },
   {
     id: 'code',
@@ -397,7 +398,7 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Giữ phòng và xác nhận',
-        highlight: 'Phòng được giữ 5 phút khi tạo yêu cầu thanh toán.',
+        highlight: 'Phòng được giữ 10 phút khi tạo yêu cầu thanh toán.',
         bullets: ['Nhận tiền đúng hạn: booking tự xác nhận.', 'Hết hạn chưa nhận tiền: phòng được mở lại.'],
       },
       {
@@ -434,7 +435,7 @@ export const POLICIES: Policy[] = [
     blocks: [
       {
         title: 'Trước khi thanh toán',
-        body: 'Bạn có thể rời luồng đặt phòng. Hết 5 phút giữ chỗ, phòng tự mở lại và không phát sinh phí.',
+        body: 'Bạn có thể rời luồng đặt phòng. Hết 10 phút giữ chỗ, phòng tự mở lại và không phát sinh phí.',
       },
       {
         title: 'Sau khi đã nhận tiền',
@@ -485,8 +486,53 @@ export function roomsAt(locationId: string) {
   return ROOMS.filter((item) => item.locationId === locationId)
 }
 
+export function rateKind(room: Pick<Room, 'type' | 'amenities'>): 'lake' | 'bath' {
+  return room.type === 'Relax' || room.amenities.includes('Bồn tắm') ? 'bath' : 'lake'
+}
+
+function stayWeekday(date: string) {
+  return new Date(`${date}T12:00:00`).getDay()
+}
+
+function rateBand(date: string, time: string): RateBand {
+  const day = stayWeekday(date)
+  if (day === 0 || day === 6) return 'weekend'
+  return clockMinutes(time) < 15 * 60 ? 'gold' : 'regular'
+}
+
+const HOLIDAYS = new Set([
+  '2026-01-01',
+  '2026-02-16',
+  '2026-02-17',
+  '2026-02-18',
+  '2026-02-19',
+  '2026-02-20',
+  '2026-04-27',
+  '2026-04-30',
+  '2026-05-01',
+  '2026-09-02',
+  '2027-01-01',
+  '2027-04-30',
+  '2027-05-01',
+  '2027-09-02',
+])
+
+function premiumNight(date: string) {
+  const day = stayWeekday(date)
+  return day === 5 || day === 6 || HOLIDAYS.has(date)
+}
+
+export function quotedStay(
+  room: Pick<Room, 'type' | 'amenities'>,
+  stay: { date: string; time: string; duration: number; overnight: boolean },
+) {
+  const kind = rateKind(room)
+  if (stay.overnight) return listedOvernight(kind, premiumNight(stay.date))
+  return listedHourly(kind, rateBand(stay.date, stay.time), stay.duration)
+}
+
 export function priceFrom(locationId: string) {
-  const list = roomsAt(locationId).map((room) => room.price3h)
+  const list = roomsAt(locationId).map((room) => listedFrom(rateKind(room)))
   return Math.min(...list)
 }
 
@@ -517,12 +563,17 @@ export function applyPromo(code: string, price: number, locationId: string) {
   return { amount, message: 'Đã áp dụng mã ưu đãi.', ok: true }
 }
 
-export function quoteOf(roomId: string, duration: number, promoCode: string) {
+export function quoteOf(
+  roomId: string,
+  duration: number,
+  promoCode: string,
+  stay: { date: string; time: string; overnight: boolean },
+) {
   const room = getRoom(roomId)
   if (!room) return null
   const location = getLocation(room.locationId)
   if (!location) return null
-  const base = slotPrice(room.price3h, duration)
+  const base = quotedStay(room, { ...stay, duration })
   const promo = applyPromo(promoCode, base, room.locationId)
   return {
     room,
@@ -533,23 +584,6 @@ export function quoteOf(roomId: string, duration: number, promoCode: string) {
     promo,
   }
 }
-
-const HOLIDAYS = new Set([
-  '2026-01-01',
-  '2026-02-16',
-  '2026-02-17',
-  '2026-02-18',
-  '2026-02-19',
-  '2026-02-20',
-  '2026-04-27',
-  '2026-04-30',
-  '2026-05-01',
-  '2026-09-02',
-  '2027-01-01',
-  '2027-04-30',
-  '2027-05-01',
-  '2027-09-02',
-])
 
 export function refundEstimate(booking: Booking, now = new Date()) {
   const paid = Math.max(0, booking.price - booking.discount)
@@ -570,6 +604,36 @@ export function displayStatus(booking: Booking, now = new Date()): BookingStatus
   if (now >= start && now < end) return 'active'
   if (now >= end) return 'done'
   return 'upcoming'
+}
+
+function rangesOverlap(
+  date: string,
+  time: string,
+  hours: number,
+  booking: { date: string; time: string; duration: number },
+) {
+  const startOf = (day: string, clock: string) => new Date(`${day}T00:00:00`).getTime() + clockMinutes(clock) * 60000
+  const start = startOf(date, time)
+  const end = start + hours * 3600000
+  const bookedStart = startOf(booking.date, booking.time)
+  const bookedEnd = bookedStart + booking.duration * 3600000
+  return start < bookedEnd && bookedStart < end
+}
+
+export function roomTaken(
+  roomId: string,
+  date: string,
+  time: string,
+  duration: number,
+  bookings: Booking[],
+  now = new Date(),
+) {
+  return bookings.some((booking) => {
+    if (booking.roomId !== roomId) return false
+    const status = displayStatus(booking, now)
+    if (status !== 'upcoming' && status !== 'active' && status !== 'pending') return false
+    return rangesOverlap(date, time, duration, booking)
+  })
 }
 
 export function statusLabel(status: BookingStatus) {

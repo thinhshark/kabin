@@ -20,6 +20,7 @@ import { HelpPage } from './pages/HelpPage'
 import { PoliciesPage } from './pages/PoliciesPage'
 import { TermsPage } from './pages/TermsPage'
 import { LookupPage, NotFoundPage } from './pages/LookupPage'
+import { PricePage } from './pages/PricePage'
 
 function ScrollTop() {
   const { pathname } = useLocation()
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="chinh-sach" element={<PoliciesPage />} />
           <Route path="chinh-sach/:id" element={<PoliciesPage />} />
           <Route path="tra-cuu" element={<LookupPage />} />
+          <Route path="bang-gia" element={<PricePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

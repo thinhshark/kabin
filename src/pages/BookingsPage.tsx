@@ -4,7 +4,7 @@ import { ArrowRight, RefreshCw, Search } from 'lucide-react'
 import { displayStatus, getLocation, getRoom, statusLabel, type BookingStatus } from '../data'
 import { useStore } from '../store'
 import { AccountNav, Photo, StatusPill, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney } from '../utils'
 
 const TABS: Array<{ id: 'all' | BookingStatus; label: string }> = [
   { id: 'all', label: 'Tất cả' },
@@ -104,7 +104,7 @@ function BookingCard({ code }: { code: string }) {
           <span>
             {booking.time}–{end.time}
           </span>
-          <span>{booking.duration} giờ</span>
+          <span>{durationText(booking.duration)}</span>
         </p>
         <b className="price">{formatMoney(total)}</b>
         <p className="hint">

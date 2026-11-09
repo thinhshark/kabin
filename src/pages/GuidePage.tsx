@@ -3,7 +3,7 @@ import { ArrowLeft, MapPin, Wifi } from 'lucide-react'
 import { displayStatus, getLocation, getRoom, PHOTOS } from '../data'
 import { useStore } from '../store'
 import { Accordion, CopyButton, Photo, StatusPill, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, mapsUrl } from '../utils'
+import { checkoutLabel, durationText, formatDate, mapsUrl } from '../utils'
 
 export function GuidePage() {
   useTitle('Hướng dẫn nhận phòng')
@@ -51,7 +51,7 @@ export function GuidePage() {
             </li>
             <li>
               <span>Thời lượng</span>
-              {booking.duration} giờ
+              {durationText(booking.duration)}
             </li>
           </ul>
           <StatusPill status={status} />

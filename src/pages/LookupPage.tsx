@@ -4,7 +4,7 @@ import { ArrowRight, Headphones, MapPin, Phone } from 'lucide-react'
 import { displayStatus, getLocation, getRoom, PHOTOS, refundEstimate, type Booking, type BookingStatus } from '../data'
 import { useStore } from '../store'
 import { CopyButton, useTitle } from '../components/ui'
-import { checkoutLabel, formatDate, formatMoney, isPhone, mapsUrl, maskPhone, normalizePhone } from '../utils'
+import { checkoutLabel, durationText, formatDate, formatMoney, isPhone, mapsUrl, maskPhone, normalizePhone } from '../utils'
 
 const STATUS_ORDER: Record<BookingStatus, number> = {
   active: 0,
@@ -190,7 +190,7 @@ function LookupStay({ booking }: { booking: Booking }) {
           </li>
           <li>
             <span>Thời lượng</span>
-            {booking.duration} giờ
+            {durationText(booking.duration)}
           </li>
           <li>
             <span>Thanh toán</span>

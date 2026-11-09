@@ -8,6 +8,7 @@ import { DurationSelect } from '../components/DurationSelect'
 import { TimeField } from '../components/TimeField'
 import { useTitle } from '../components/ui'
 import { LogoStacked } from '../components/brandLogo'
+import { PriceListLink } from '../components/PriceList'
 import { checkoutLabel, formatMoney, overnightStay, stayHours, todayISO } from '../utils'
 
 export function HomePage() {
@@ -135,6 +136,7 @@ export function HomePage() {
                 label="Giờ trả phòng"
                 value={draft.checkoutTime}
                 align="end"
+                suffix={checkoutLabel(draft.time, draft.duration).nextDay ? 'hôm sau' : undefined}
                 onChange={(checkoutTime) =>
                   setDraft({ overnight: false, checkoutTime, duration: stayHours(draft.time, checkoutTime) })
                 }
@@ -165,8 +167,11 @@ export function HomePage() {
                 <h3>Phòng {room.type}</h3>
                 {room.amenities ? <p>{room.amenities}</p> : null}
                 <div className="room-card-foot">
-                  <span>
-                    Từ <PriceInline value={room.priceFrom} />
+                  <span className="price-stack">
+                    <span>
+                      Từ <PriceInline value={room.priceFrom} />
+                    </span>
+                    <PriceListLink />
                   </span>
                   <button type="button" className="text-btn" onClick={() => submit(room.type)}>
                     Xem phòng <ArrowRight size={16} />

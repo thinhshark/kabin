@@ -14,12 +14,14 @@ export function TimeField({
   onChange,
   align = 'start',
   hideLabel = false,
+  suffix,
 }: {
   label: string
   value: string
   onChange: (next: string) => void
   align?: 'start' | 'end'
   hideLabel?: boolean
+  suffix?: string
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -60,12 +62,13 @@ export function TimeField({
       <button
         type="button"
         className="time-trigger"
-        aria-label={hideLabel ? label : undefined}
+        aria-label={hideLabel ? `${label}${suffix ? `, ${suffix}` : ''}` : undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
         {formatClock(value)}
+        {suffix ? <small>{suffix}</small> : null}
       </button>
       {open ? (
         <div className={`time-pop ${align}`} role="dialog" aria-label={label}>
