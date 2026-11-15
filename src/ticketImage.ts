@@ -238,24 +238,6 @@ function drawRuleIcon(context: CanvasRenderingContext2D, cx: number, cy: number,
   context.restore()
 }
 
-function wrap(context: CanvasRenderingContext2D, text: string, max: number, font: string) {
-  context.font = font
-  const words = text.split(' ')
-  const lines: string[] = []
-  let line = ''
-  for (const word of words) {
-    const next = line ? `${line} ${word}` : word
-    if (context.measureText(next).width > max && line) {
-      lines.push(line)
-      line = word
-    } else {
-      line = next
-    }
-  }
-  if (line) lines.push(line)
-  return lines
-}
-
 function roundRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   context.beginPath()
   context.moveTo(x + radius, y)
