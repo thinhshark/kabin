@@ -137,14 +137,15 @@ export function LocationsPage() {
                         <span>Chưa nhận đặt phòng</span>
                       ) : (
                         <span className="price-stack">
-                          <span>
-                            Từ <b className="price from-price">{formatMoney(priceFrom(location.id))}</b>
-                            <small> / {fromPriceLabel(priceFromDetail(location.id))}</small>
-                          </span>
+                          <p className="from-line">
+                            <span>Từ</span>
+                            <b className="price">{formatMoney(priceFrom(location.id))}</b>
+                            <small>{fromPriceLabel(priceFromDetail(location.id))}</small>
+                          </p>
                           <PriceListLink />
                         </span>
                       )}
-                      <div>
+                      <div className="loc-actions">
                         {location.openingSoon ? (
                           <span className="soon-cta">Sắp mở cửa...</span>
                         ) : (

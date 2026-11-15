@@ -166,18 +166,22 @@ export function HomePage() {
             <article key={room.type} className="room-card">
               <img src={room.photo} alt={`Phòng ${room.type}`} />
               <div>
-                <h3>Phòng {room.type}</h3>
-                {room.amenities ? <p>{room.amenities}</p> : null}
+                <div className="room-card-title">
+                  <h3>Phòng {room.type}</h3>
+                  {room.amenities ? <p>{room.amenities}</p> : null}
+                </div>
                 <div className="room-card-foot">
-                  <span className="price-stack">
-                    <span>
-                      Từ <PriceInline value={room.priceFrom} label={room.fromLabel} />
-                    </span>
+                  <p className="from-line">
+                    <span>Từ</span>
+                    <b className="price">{formatMoney(room.priceFrom)}</b>
+                    <small>{room.fromLabel}</small>
+                  </p>
+                  <div className="room-card-actions">
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => submit(room.type)}>
+                      Xem phòng <ArrowRight size={15} />
+                    </button>
                     <PriceListLink />
-                  </span>
-                  <button type="button" className="text-btn" onClick={() => submit(room.type)}>
-                    Xem phòng <ArrowRight size={16} />
-                  </button>
+                  </div>
                 </div>
               </div>
             </article>
@@ -413,14 +417,5 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
         <p>{text}</p>
       </div>
     </div>
-  )
-}
-
-function PriceInline({ value, label }: { value: number; label: string }) {
-  return (
-    <b className="price from-price">
-      {formatMoney(value)}
-      <small> / {label}</small>
-    </b>
   )
 }

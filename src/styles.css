@@ -336,7 +336,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .soon-panel p { margin: 0; color: var(--muted); }
 .soon-disabled { pointer-events: none; color: var(--muted); border-color: var(--line); background: #f6f1ea; }
 
+.crumb { display: flex; flex-wrap: wrap; align-items: center; row-gap: 2px; }
 .crumb, .crumb a { color: var(--muted); font-size: 13px; }
+.crumb > span { white-space: nowrap; }
 .crumb-sep, .crumb span { margin: 0 6px; color: #b3aaa2; }
 .meta-line { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; color: var(--muted); }
 .meta-line a { font-weight: 650; }
@@ -422,10 +424,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 .room-card > div, .loc-body, .voucher-body { padding: 14px 16px 16px; }
 .room-card > div { flex: 1; display: flex; flex-direction: column; }
 .loc-body { flex: 1; display: flex; flex-direction: column; }
-.room-card h3 { font-size: 22px; }
+.room-card h3 { font-size: 22px; margin: 0; }
 .room-card p, .loc-body p { color: var(--muted); }
-.room-card-foot, .loc-foot { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
-.room-card-foot, .loc-foot { margin-top: auto; padding-top: 10px; }
+.room-card-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.room-card-title p { margin: 0; }
+.room-card-foot { display: grid; gap: 10px; margin-top: 12px; }
+.from-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 0; color: var(--muted); }
+.from-line .price { font-size: 22px; }
+.from-line small { color: var(--muted); font-size: 13px; }
+.room-card-actions { display: flex; align-items: center; gap: 8px; }
+.room-card-actions .btn { flex: 1; }
+.room-card-actions .price-list-link { flex: 1; justify-content: center; min-height: 40px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.loc-foot { display: flex; justify-content: space-between; gap: 10px; align-items: flex-end; margin-top: auto; padding-top: 10px; }
 .steps-panel { background: #f3ebe3; border-radius: 24px; padding: 22px; }
 .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 8px 0 12px; }
 .step-col { display: flex; gap: 12px; align-items: flex-start; }
@@ -910,6 +920,8 @@ ul { margin: 0; padding: 0; list-style: none; }
   .qr-layout, .stay-bar, .room-row, .booking-card, .state-card, .mini-room { grid-template-columns: 1fr; }
   .qr-layout > :first-child { display: grid; justify-items: center; }
   .mini-room-end, .room-row-end, .booking-actions, .loc-foot, .loc-foot > div { justify-items: stretch; align-items: stretch; }
+  .room-row-end .price-stack, .mini-room-end .price-stack { justify-items: start; }
+  .room-row-end .btn, .mini-room-end .btn { width: 100%; justify-content: center; }
   .room-row > img, .booking-card > img, .mini-room > img, .state-card > img { height: 160px; }
   .account-nav { display: none; }
   .mobile-who { display: flex; }
@@ -922,6 +934,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   .login-top .logo { display: inline-flex; }
   .login-panel { align-content: start; }
   .login-card { margin-top: 8px; }
+  .section { margin: 32px 0; }
+  .room-card img { height: 168px; }
+  .room-card > div { padding: 12px 14px 14px; }
   .hero { height: 340px; border-radius: 20px; }
   .hero-copy { left: 18px; right: 18px; top: 28px; }
   .search-card { position: relative; z-index: 2; top: auto; margin: -36px 0 0; }
@@ -941,6 +956,11 @@ ul { margin: 0; padding: 0; list-style: none; }
   .catalog-tools select { font-size: 15px; }
   .chip-row { flex-wrap: wrap; overflow: visible; }
   .loc-grid, .cards-3, .steps-grid, .guide-grid, .place-grid, .about-split, .reason-grid { grid-template-columns: 1fr; }
+  .loc-foot { flex-direction: column; align-items: stretch; gap: 12px; }
+  .loc-actions { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+  .loc-actions .btn, .loc-actions .text-btn { justify-content: center; width: 100%; }
+  .loc-actions .text-btn { min-height: 40px; border: 1px solid var(--line); border-radius: 12px; }
+  .loc-foot .price-list-link { justify-content: flex-start; }
   .lookup-steps li { grid-template-columns: 28px minmax(0, 1fr) 88px; }
   .lookup-steps img { height: 72px; }
   .cta-foot { flex-direction: column; align-items: flex-start; }
