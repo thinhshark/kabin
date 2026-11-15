@@ -171,7 +171,7 @@ export function HomePage() {
                 <div className="room-card-foot">
                   <span className="price-stack">
                     <span>
-                      Từ <PriceInline value={room.priceFrom} />
+                      Từ <PriceInline value={room.priceFrom} label={room.fromLabel} />
                     </span>
                     <PriceListLink />
                   </span>
@@ -416,11 +416,11 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
   )
 }
 
-function PriceInline({ value }: { value: number }) {
+function PriceInline({ value, label }: { value: number; label: string }) {
   return (
-    <b className="price">
+    <b className="price from-price">
       {formatMoney(value)}
-      <small> / 3 giờ</small>
+      <small> / {label}</small>
     </b>
   )
 }

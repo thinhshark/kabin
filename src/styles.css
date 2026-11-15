@@ -255,6 +255,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .price { color: var(--brand); font-weight: 750; }
 .price small, .loc-foot small { color: var(--muted); font-weight: 500; font-size: 13px; }
+.price.from-price { display: grid; line-height: 1.35; }
+.price.from-price small { display: block; }
 .price-lg { font-size: 32px; font-family: var(--serif); }
 .pill {
   display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;

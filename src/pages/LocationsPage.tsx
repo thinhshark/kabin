@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin, SlidersHorizontal } from 'lucide-react'
-import { DISTRICTS, FILTER_AMENITIES, LOCATIONS, priceFrom, type Amenity } from '../data'
+import { DISTRICTS, FILTER_AMENITIES, LOCATIONS, priceFrom, priceFromDetail, type Amenity } from '../data'
+import { fromPriceLabel } from '../priceList'
 import { PriceListLink } from '../components/PriceList'
 import { AmenityList, Photo, useTitle } from '../components/ui'
 import { cx, formatMoney } from '../utils'
@@ -137,8 +138,8 @@ export function LocationsPage() {
                       ) : (
                         <span className="price-stack">
                           <span>
-                            Từ <b className="price">{formatMoney(priceFrom(location.id))}</b>
-                            <small> / 3 giờ</small>
+                            Từ <b className="price from-price">{formatMoney(priceFrom(location.id))}</b>
+                            <small> / {fromPriceLabel(priceFromDetail(location.id))}</small>
                           </span>
                           <PriceListLink />
                         </span>

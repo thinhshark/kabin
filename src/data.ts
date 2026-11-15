@@ -1,5 +1,5 @@
 import { asset, clockMinutes, formatMoney, shiftISO, todayISO } from './utils'
-import { listedFrom, listedHourly, listedOvernight, type PriceKind, type RateBand } from './priceList'
+import { listedFrom, listedFromDetail, listedHourly, listedOvernight, type PriceKind, type RateBand } from './priceList'
 
 export type Amenity =
   | 'Máy chiếu'
@@ -348,11 +348,16 @@ export function roomAmenities(room: Room): Amenity[] {
   return [...new Set([...(place?.amenities ?? []), ...room.amenities])]
 }
 
-export const ROOM_TYPES: Array<{ type: Room['type']; priceFrom: number; amenities: string; photo: string }> = [
-  { type: 'Classic', priceFrom: listedFrom('lake'), amenities: 'View hồ', photo: CLASSIC_PHOTOS[0] },
-  { type: 'Cozy', priceFrom: listedFrom('bench'), amenities: 'Băng ghế gỗ gần cửa sổ', photo: COZY_PHOTOS[0] },
-  { type: 'Signature', priceFrom: listedFrom('bath'), amenities: 'Bồn tắm', photo: SIGNATURE_PHOTOS[0] },
+export const ROOM_TYPES: Array<{ type: Room['type']; priceFrom: number; fromLabel: string; amenities: string; photo: string }> = [
+  { type: 'Classic', ...fromFields('lake'), amenities: 'View hồ', photo: CLASSIC_PHOTOS[0] },
+  { type: 'Cozy', ...fromFields('bench'), amenities: 'Băng ghế gỗ gần cửa sổ', photo: COZY_PHOTOS[0] },
+  { type: 'Signature', ...fromFields('bath'), amenities: 'Bồn tắm', photo: SIGNATURE_PHOTOS[0] },
 ]
+
+function fromFields(kind: PriceKind) {
+  const from = listedFromDetail(kind)
+  return { priceFrom: from.price, fromLabel: from.hours > 0 ? `${from.hours} giờ, ${from.when}` : from.when }
+}
 
 export const PROMOS: Promo[] = [
   {
@@ -686,9 +691,13 @@ export function quotedStay(
   return listedHourly(kind, rateBand(stay.date, stay.time), stay.duration)
 }
 
+export function priceFromDetail(locationId: string) {
+  const list = roomsAt(locationId).map((room) => listedFromDetail(rateKind(room)))
+  return list.reduce((best, item) => (item.price < best.price ? item : best))
+}
+
 export function priceFrom(locationId: string) {
-  const list = roomsAt(locationId).map((room) => listedFrom(rateKind(room)))
-  return Math.min(...list)
+  return priceFromDetail(locationId).price
 }
 
 export function isPromoExpired(promo: Promo) {

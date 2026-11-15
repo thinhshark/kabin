@@ -67,9 +67,36 @@ export const PRICE_ROOMS = [
 
 export const PRICE_HOURS = Array.from({ length: 23 }, (_, index) => index + 2)
 
-export function listedFrom(kind: PriceKind) {
+export type ListedFrom = {
+  price: number
+  hours: number
+  when: string
+}
+
+export function listedFromDetail(kind: PriceKind): ListedFrom {
   const room = PRICE_ROOMS.find((item) => item.id === kind) ?? PRICE_ROOMS[0]
-  return room.hours.gold[1]
+  let best: ListedFrom = { price: Number.POSITIVE_INFINITY, hours: 2, when: RATE_BANDS[0].note }
+  for (const band of RATE_BANDS) {
+    room.hours[band.id].forEach((price, index) => {
+      if (price < best.price) best = { price, hours: index + 2, when: band.note }
+    })
+  }
+  const nights = [
+    { price: room.overnight.weekday, when: 'Đêm Chủ nhật–Thứ năm' },
+    { price: room.overnight.weekend, when: 'Đêm Thứ sáu, Thứ bảy và lễ, Tết' },
+  ]
+  for (const night of nights) {
+    if (night.price < best.price) best = { price: night.price, hours: 0, when: night.when }
+  }
+  return best
+}
+
+export function listedFrom(kind: PriceKind) {
+  return listedFromDetail(kind).price
+}
+
+export function fromPriceLabel(from: ListedFrom) {
+  return from.hours > 0 ? `${from.hours} giờ, ${from.when}` : from.when
 }
 
 export function listedHourly(kind: PriceKind, band: RateBand, hours: number) {
