@@ -119,14 +119,18 @@ export function LocationsPage() {
                   <div className="loc-body">
                     <div className="loc-title">
                       <h2>{location.name}</h2>
-                      <span>
-                        <MapPin size={14} /> Cách {location.distance.toString().replace('.', ',')} km
-                      </span>
+                      {location.openingSoon ? null : (
+                        <span>
+                          <MapPin size={14} /> Cách {location.distance.toString().replace('.', ',')} km
+                        </span>
+                      )}
                     </div>
-                    <p>
-                      {location.district}, {location.city}
-                    </p>
-                    <AmenityList items={location.amenities} />
+                    {location.openingSoon ? null : (
+                      <p>
+                        {location.district}, {location.city}
+                      </p>
+                    )}
+                    {location.openingSoon ? null : <AmenityList items={location.amenities} />}
                     <div className="loc-foot">
                       {location.openingSoon ? (
                         <span>Chưa nhận đặt phòng</span>

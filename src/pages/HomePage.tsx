@@ -219,10 +219,12 @@ export function HomePage() {
                 )}
                 <div>
                   <h3>{place.name.replace('Kabin ', '')}</h3>
-                  <p>
-                    <MapPin size={14} /> {place.district} · {place.city}
-                  </p>
-                  <p>{place.blurb}</p>
+                  {place.openingSoon ? null : (
+                    <p>
+                      <MapPin size={14} /> {place.district} · {place.city}
+                    </p>
+                  )}
+                  {place.openingSoon ? null : <p>{place.blurb}</p>}
                   {place.openingSoon ? (
                     <span className="soon-cta">Sắp mở cửa...</span>
                   ) : (
