@@ -133,7 +133,7 @@ export function PaymentPage() {
             <div className="summary-head">
               <h2>{location.name}</h2>
               <span>
-                Phòng {room.number} · {room.type}
+                Phòng {room.type}
               </span>
             </div>
             <ul className="facts">

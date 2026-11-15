@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Headphones, MapPin, Phone } from 'lucide-react'
+import { ArrowRight, Download, Headphones, MapPin, Phone } from 'lucide-react'
+import { RefundTable, RuleFlags, StayRules } from '../components/StayRules'
+import { downloadTicketImage, ticketImageFromBooking } from '../ticketImage'
 import { displayStatus, getLocation, getRoom, PHOTOS, refundEstimate, type Booking, type BookingStatus } from '../data'
 import { useStore } from '../store'
 import { CopyButton, useTitle } from '../components/ui'
@@ -127,7 +129,8 @@ export function LookupPage() {
 }
 
 function LookupStay({ booking }: { booking: Booking }) {
-  const { cancelBooking } = useStore()
+  const { cancelBooking, showToast } = useStore()
+  const [saving, setSaving] = useState(false)
   const location = getLocation(booking.locationId)
   const room = getRoom(booking.roomId)
   const status = displayStatus(booking)
@@ -136,16 +139,22 @@ function LookupStay({ booking }: { booking: Booking }) {
   const valid = status === 'upcoming' || status === 'active'
   const showCodes = valid && Boolean(booking.gateCode)
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [rulesOpen, setRulesOpen] = useState(false)
   const estimate = refundEstimate(booking)
 
   useEffect(() => {
-    if (!cancelOpen) return
+    if (!cancelOpen && !rulesOpen) return
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setRulesOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
     }
-  }, [cancelOpen])
+  }, [cancelOpen, rulesOpen])
 
   return (
     <>
@@ -197,34 +206,45 @@ function LookupStay({ booking }: { booking: Booking }) {
             {formatMoney(total)}
           </li>
         </ul>
-        {valid ? (
-          <button type="button" className="btn btn-line btn-block" onClick={() => setCancelOpen(true)}>
-            Hủy phòng
+        <div className="btn-row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={saving}
+            onClick={() => {
+              setSaving(true)
+              downloadTicketImage(ticketImageFromBooking(booking))
+                .then(() => showToast('Đã lưu vé'))
+                .catch(() => showToast('Không lưu được ảnh vé'))
+                .finally(() => setSaving(false))
+            }}
+          >
+            <Download size={16} /> {saving ? 'Đang lưu...' : 'Lưu vé'}
           </button>
-        ) : null}
+          {valid ? (
+            <button type="button" className="btn btn-line" onClick={() => setCancelOpen(true)}>
+              Hủy phòng
+            </button>
+          ) : null}
+        </div>
       </section>
 
       <section>
         <h2>Mã cửa và phòng</h2>
         {showCodes ? (
           <>
-            <p className="hint">Nhập đủ cả dấu # ở cuối mỗi mã.</p>
+            <p className="hint">Cổng và cửa phòng dùng chung một mã. Nhập đủ dấu #.</p>
             <div className="code-box">
-              <span>Mã cổng</span>
+              <span>Mã cổng và phòng</span>
               <strong>{booking.gateCode}</strong>
               <CopyButton value={booking.gateCode} quiet />
-            </div>
-            <div className="code-box">
-              <span>Mã phòng {room?.number}</span>
-              <strong>{booking.roomCode}</strong>
-              <CopyButton value={booking.roomCode} quiet />
             </div>
             <p className="hint">Mã chỉ có hiệu lực trong khung giờ mà khách đặt.</p>
           </>
         ) : (
           <p className="callout">
             {status === 'pending'
-              ? 'Mã cổng và mã phòng được gửi khi đặt phòng được xác nhận.'
+              ? 'Mã cổng và phòng được gửi khi đặt phòng được xác nhận.'
               : 'Mã cửa không còn hiệu lực vì khung giờ này đã kết thúc.'}
           </p>
         )}
@@ -250,25 +270,52 @@ function LookupStay({ booking }: { booking: Booking }) {
             <b>2</b>
             <div>
               <strong>Mở cổng</strong>
-              <p>Nhập mã cổng trên bàn phím khóa, kể cả dấu #.</p>
+              <p>Nhập mã cổng và phòng trên bàn phím khóa, kể cả dấu #.</p>
             </div>
             <img src={PHOTOS.gateLock} alt="Khóa mã trên cổng" />
           </li>
           <li>
             <b>3</b>
             <div>
-              <strong>Nhập mã phòng {room?.number ?? ''}</strong>
-              <p>Kiểm tra đúng số phòng, rồi nhập mã phòng để mở cửa.</p>
+              <strong>Mở phòng</strong>
+              <p>Kiểm tra đúng số phòng, rồi nhập lại đúng mã đó để mở cửa.</p>
             </div>
             <img src={PHOTOS.roomLock} alt="Khóa mã trên cửa phòng" />
           </li>
         </ol>
         <p className="hint">Mật khẩu Wi-Fi dán ở mặt trong cửa. Đến giờ trả phòng, quý khách vui lòng tắt điều hòa, đóng cửa trước khi rời phòng.</p>
-        <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> <span>Liên hệ Hotline hỗ trợ</span> <strong>1800.2230</strong>
-        </a>
+      </section>
+
+      <section className="lookup-policy">
+        <RuleFlags />
+        <RefundTable />
+        <div className="lookup-actions">
+          <a className="btn hotline-btn" href="tel:18002230">
+            <Phone size={18} /> Liên hệ hotline
+          </a>
+          <button type="button" className="btn btn-line" onClick={() => setRulesOpen(true)}>
+            Nội quy & điều khoản
+          </button>
+        </div>
       </section>
     </article>
+      {rulesOpen ? (
+        <div className="modal-root" role="presentation" onClick={() => setRulesOpen(false)}>
+          <div
+            className="modal-card align-left rules-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rules-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="modal-x" onClick={() => setRulesOpen(false)} aria-label="Đóng">
+              ×
+            </button>
+            <h2 id="rules-title">Nội quy</h2>
+            <StayRules mode="sheets" />
+          </div>
+        </div>
+      ) : null}
       {cancelOpen ? (
         <div className="modal-root" role="presentation" onClick={() => setCancelOpen(false)}>
           <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="cancel-title" onClick={(event) => event.stopPropagation()}>
@@ -276,12 +323,7 @@ function LookupStay({ booking }: { booking: Booking }) {
             <p className="refund-line">
               Số tiền được hoàn ước tính: <strong>{formatMoney(estimate.amount)}</strong>
             </p>
-            <ul className="policy-note">
-              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
-              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
-              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
-            </ul>
-            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+            <StayRules mode="refund" />
             <p className="confirm-ask">Bạn vẫn muốn hủy chứ?</p>
             <div className="stack-buttons">
               <button

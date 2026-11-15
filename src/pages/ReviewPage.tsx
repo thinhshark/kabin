@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react
 import { quoteOf } from '../data'
 import { useStore } from '../store'
 import { PriceListLink } from '../components/PriceList'
+import { RefundTable, RuleFlags, StayRules } from '../components/StayRules'
 import { Photo, Stepper, useTitle } from '../components/ui'
 import { checkoutLabel, durationText, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
 
@@ -94,8 +95,8 @@ export function ReviewPage() {
       list.push('Chưa gửi đủ ảnh CCCD hai mặt.')
     }
     if (!draft.agreed) {
-      next.agreed = 'Bạn cần đồng ý quy định đặt phòng.'
-      list.push('Chưa đồng ý quy định đặt phòng.')
+      next.agreed = 'Bạn cần đồng ý nội quy và chính sách hoàn hủy.'
+      list.push('Chưa đồng ý nội quy và chính sách hoàn hủy.')
     }
     if (isPastSlot(draft.date, draft.time)) {
       next.slot = 'Khung giờ này đã qua. Hãy chọn lại phòng.'
@@ -136,14 +137,14 @@ export function ReviewPage() {
       <p className="lead">Vui lòng kiểm tra phòng, thời gian và thông tin liên hệ.</p>
       {errors.slot ? <p className="form-error">{errors.slot}</p> : null}
 
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
       <div className="checkout">
-        <form
-          className="co-form"
-          onSubmit={(event) => {
-            event.preventDefault()
-            submit()
-          }}
-        >
+        <div className="co-form">
           <section className="panel">
             <h2>Thông tin liên hệ</h2>
             <label className="field">
@@ -239,27 +240,7 @@ export function ReviewPage() {
             {errors.promo ? <span className="form-error">{errors.promo}</span> : null}
             {draft.promoCode && promo.ok ? <span className="hint ok">{promo.message}</span> : null}
           </section>
-
-          <div className="pay-box mobile-pay">
-            <PayLines base={base} discount={discount} total={total} />
-          </div>
-
-          <label className="check agree">
-            <input type="checkbox" checked={draft.agreed} onChange={(event) => setDraft({ agreed: event.target.checked })} />
-            <span>
-              Tôi đã đọc và đồng ý với <Link to="/chinh-sach/dat-phong">quy định đặt phòng</Link>
-            </span>
-          </label>
-          {errors.agreed ? <span className="form-error">{errors.agreed}</span> : null}
-
-          <button className="btn btn-primary btn-block mobile-pay" type="submit">
-            Giữ phòng & thanh toán <ArrowRight size={16} />
-          </button>
-          <BlockerList items={blockers} />
-          <p className="hint lock-hint mobile-pay">
-            <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
-          </p>
-        </form>
+        </div>
 
         <aside className="side">
           <article className="summary">
@@ -268,7 +249,7 @@ export function ReviewPage() {
               <div>
                 <h2>{location.name}</h2>
                 <p>
-                  Phòng {room.number} · {room.type}
+                  Phòng {room.type}
                 </p>
               </div>
               <Link to={`/co-so/${location.id}/chon-phong`}>Thay đổi</Link>
@@ -292,16 +273,37 @@ export function ReviewPage() {
               </li>
             </ul>
             <PayLines base={base} discount={discount} total={total} />
-            <button className="btn btn-primary btn-block desktop-pay" type="button" onClick={submit}>
+          </article>
+          <div className="pay-stack">
+            <label className="check agree">
+              <input type="checkbox" checked={draft.agreed} onChange={(event) => setDraft({ agreed: event.target.checked })} />
+              <span>
+                Tôi đã đọc và đồng ý với nội quy, quy định cấm và <Link to="/chinh-sach/doi-huy">chính sách hoàn hủy</Link>
+              </span>
+            </label>
+            {errors.agreed ? <span className="form-error">{errors.agreed}</span> : null}
+            <button className="btn btn-primary btn-block" type="submit">
               Giữ phòng & thanh toán <ArrowRight size={16} />
             </button>
+            <RuleFlags />
             <BlockerList items={blockers} />
-            <p className="hint lock-hint desktop-pay">
+            <p className="hint lock-hint">
               <Lock size={14} /> Phòng được giữ trong 10 phút để bạn hoàn tất thanh toán.
             </p>
-          </article>
+          </div>
         </aside>
+      <section className="before-pay">
+        <div className="panel">
+          <h2>Chính sách hoàn hủy</h2>
+          <RefundTable heading={false} />
+        </div>
+        <div className="panel">
+          <h2>Nội quy</h2>
+          <StayRules mode="sheets" />
+        </div>
+      </section>
       </div>
+      </form>
       {notice === 'errors' ? (
         <div className="modal-root" role="presentation" onClick={() => setNotice(null)}>
           <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="pay-block-title" onClick={(event) => event.stopPropagation()}>
@@ -325,14 +327,10 @@ export function ReviewPage() {
       ) : null}
       {notice === 'policy' ? (
         <div className="modal-root" role="presentation">
-          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="policy-title">
-            <h2 id="policy-title">Chính sách hoàn / hủy</h2>
-            <ul className="policy-note">
-              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
-              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
-              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
-            </ul>
-            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+          <div className="modal-card align-left rules-dialog" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+            <h2 id="policy-title">Xác nhận nội quy và hoàn hủy</h2>
+            <p>Các quy định dưới đây áp dụng cho đặt phòng này.</p>
+            <StayRules mode="brief" />
             <div className="stack-buttons">
               <button type="button" className="btn btn-primary" onClick={continuePay}>
                 Tiếp tục thanh toán

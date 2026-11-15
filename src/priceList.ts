@@ -21,10 +21,12 @@ function hourlyRates(early: Record<RateBand, number[]>, cap: Record<RateBand, nu
   ) as Record<RateBand, number[]>
 }
 
+export type PriceKind = 'lake' | 'bench' | 'bath'
+
 export const PRICE_ROOMS = [
   {
     id: 'lake',
-    name: 'Phòng view hồ',
+    name: 'View hồ',
     hours: hourlyRates(
       {
         gold: [275_000, 325_000, 350_000, 389_000, 419_000, 435_000, 449_000],
@@ -33,11 +35,24 @@ export const PRICE_ROOMS = [
       },
       { gold: 890_000, regular: 940_000, weekend: 990_000 },
     ),
-    overnight: { weekday: 419_000, weekend: 469_000 },
+    overnight: { weekday: 419_000, weekend: 459_000 },
+  },
+  {
+    id: 'bench',
+    name: 'View hồ có băng ghế gỗ',
+    hours: hourlyRates(
+      {
+        gold: [285_000, 340_000, 370_000, 414_000, 449_000, 470_000, 494_000],
+        regular: [319_000, 374_000, 419_000, 454_000, 479_000, 504_000, 534_000],
+        weekend: [339_000, 394_000, 439_000, 484_000, 529_000, 564_000, 594_000],
+      },
+      { gold: 890_000, regular: 940_000, weekend: 990_000 },
+    ),
+    overnight: { weekday: 435_000, weekend: 475_000 },
   },
   {
     id: 'bath',
-    name: 'Phòng view hồ có bồn tắm',
+    name: 'View hồ có bồn tắm',
     hours: hourlyRates(
       {
         gold: [305_000, 365_000, 400_000, 459_000, 489_000, 525_000, 549_000],
@@ -46,24 +61,24 @@ export const PRICE_ROOMS = [
       },
       { gold: 890_000, regular: 940_000, weekend: 990_000 },
     ),
-    overnight: { weekday: 489_000, weekend: 569_000 },
+    overnight: { weekday: 459_000, weekend: 499_000 },
   },
 ] as const
 
 export const PRICE_HOURS = Array.from({ length: 23 }, (_, index) => index + 2)
 
-export function listedFrom(kind: 'lake' | 'bath') {
+export function listedFrom(kind: PriceKind) {
   const room = PRICE_ROOMS.find((item) => item.id === kind) ?? PRICE_ROOMS[0]
   return room.hours.gold[1]
 }
 
-export function listedHourly(kind: 'lake' | 'bath', band: RateBand, hours: number) {
+export function listedHourly(kind: PriceKind, band: RateBand, hours: number) {
   const room = PRICE_ROOMS.find((item) => item.id === kind) ?? PRICE_ROOMS[0]
   const rounded = Math.min(24, Math.max(2, Math.round(hours)))
   return room.hours[band][rounded - 2]
 }
 
-export function listedOvernight(kind: 'lake' | 'bath', premiumNight: boolean) {
+export function listedOvernight(kind: PriceKind, premiumNight: boolean) {
   const room = PRICE_ROOMS.find((item) => item.id === kind) ?? PRICE_ROOMS[0]
   return premiumNight ? room.overnight.weekend : room.overnight.weekday
 }

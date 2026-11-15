@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin, SlidersHorizontal } from 'lucide-react'
-import { FILTER_AMENITIES, getLocation, LOCATIONS, quotedStay, ROOMS, roomAmenities, roomTaken, roomsAt, type Amenity, type Room } from '../data'
+import { FILTER_AMENITIES, getLocation, LOCATIONS, locationsOpenFirst, quotedStay, ROOMS, roomAmenities, roomTaken, roomsAt, typeOffers, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { PriceListLink } from '../components/PriceList'
@@ -35,7 +35,7 @@ export function SelectRoomPage() {
   const free = (room: Room) => room.available && !roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)
 
   const { here, elsewhere } = useMemo(() => {
-    if (!location) return { here: [] as Room[], elsewhere: [] as Room[] }
+    if (!location) return { here: [] as ReturnType<typeof typeOffers<Room>>, elsewhere: [] as ReturnType<typeof typeOffers<Room>> }
     const matches = (room: Room) => {
       if (typeFilter && room.type !== typeFilter) return false
       if (onlyOpen && !free(room)) return false
@@ -45,19 +45,22 @@ export function SelectRoomPage() {
       const diff = quotedStay(a, stay) - quotedStay(b, stay)
       return sort === 'desc' ? -diff : diff
     }
-    const hereRooms = roomsAt(location.id).filter(matches)
+    const hereRooms = typeOffers(roomsAt(location.id).filter(matches), free)
     hereRooms.sort((a, b) => {
-      if (free(a) !== free(b)) return free(a) ? -1 : 1
-      return byChoice(a, b)
+      if (a.open !== b.open) return a.open ? -1 : 1
+      return byChoice(a.room, b.room)
     })
-    const otherRooms = ROOMS.filter((room) => {
-      const place = getLocation(room.locationId)
-      return room.locationId !== location.id && !place?.openingSoon && free(room) && matches(room)
-    })
+    const otherRooms = typeOffers(
+      ROOMS.filter((room) => {
+        const place = getLocation(room.locationId)
+        return room.locationId !== location.id && !place?.openingSoon && free(room) && matches(room)
+      }),
+      () => true,
+    )
     otherRooms.sort((a, b) => {
-      const distance = (getLocation(a.locationId)?.distance ?? 0) - (getLocation(b.locationId)?.distance ?? 0)
+      const distance = (getLocation(a.room.locationId)?.distance ?? 0) - (getLocation(b.room.locationId)?.distance ?? 0)
       if (distance !== 0) return distance
-      return byChoice(a, b)
+      return byChoice(a.room, b.room)
     })
     return { here: hereRooms, elsewhere: otherRooms }
   }, [location, typeFilter, onlyOpen, amenities, sort, draft.date, draft.time, draft.duration, draft.overnight, bookings])
@@ -71,7 +74,7 @@ export function SelectRoomPage() {
     )
   }
 
-  const openCount = here.filter((room) => free(room)).length + elsewhere.length
+  const openCount = here.filter((offer) => offer.open).length + elsewhere.length
 
   if (location.openingSoon) return <Navigate to="/co-so" replace />
 
@@ -105,7 +108,7 @@ export function SelectRoomPage() {
                   navigate(`/co-so/${next}/chon-phong${query ? `?${query}` : ''}`)
                 }}
               >
-                {LOCATIONS.map((item) => (
+                {locationsOpenFirst(LOCATIONS).map((item) => (
                   <option key={item.id} value={item.id} disabled={item.openingSoon && item.id !== location.id}>
                     {item.openingSoon ? `${item.name} · Opening soon` : item.name}
                   </option>
@@ -239,17 +242,17 @@ export function SelectRoomPage() {
               </div>
             ) : (
               <>
-                {here.map((room) => (
+                {here.map((offer) => (
                   <RoomChoice
-                    key={room.id}
-                    room={room}
+                    key={`${offer.room.locationId}-${offer.room.type}`}
+                    room={offer.room}
                     stayLabel={stayLabel}
-                    price={quotedStay(room, stay)}
-                    taken={roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)}
+                    price={quotedStay(offer.room, stay)}
+                    open={offer.open}
                     past={past}
                     onOpen={(placeId) => {
-                      setDraft({ locationId: placeId, roomId: room.id })
-                      navigate(`/co-so/${placeId}/phong/${room.id}`)
+                      setDraft({ locationId: placeId, roomId: offer.room.id })
+                      navigate(`/co-so/${placeId}/phong/${encodeURIComponent(offer.room.type)}`)
                     }}
                   />
                 ))}
@@ -259,17 +262,17 @@ export function SelectRoomPage() {
                     <p>Thêm lựa chọn gần bạn, trong cùng khung giờ.</p>
                   </div>
                 ) : null}
-                {elsewhere.map((room) => (
+                {elsewhere.map((offer) => (
                   <RoomChoice
-                    key={room.id}
-                    room={room}
+                    key={`${offer.room.locationId}-${offer.room.type}`}
+                    room={offer.room}
                     stayLabel={stayLabel}
-                    price={quotedStay(room, stay)}
-                    taken={roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)}
+                    price={quotedStay(offer.room, stay)}
+                    open={offer.open}
                     past={past}
                     onOpen={(placeId) => {
-                      setDraft({ locationId: placeId, roomId: room.id })
-                      navigate(`/co-so/${placeId}/phong/${room.id}`)
+                      setDraft({ locationId: placeId, roomId: offer.room.id })
+                      navigate(`/co-so/${placeId}/phong/${encodeURIComponent(offer.room.type)}`)
                     }}
                   />
                 ))}
@@ -295,25 +298,22 @@ function RoomChoice({
   stayLabel,
   price,
   past,
-  taken,
+  open,
   onOpen,
 }: {
   room: Room
   stayLabel: string
   price: number
   past: boolean
-  taken: boolean
+  open: boolean
   onOpen: (locationId: string) => void
 }) {
   const place = getLocation(room.locationId)
-  const open = room.available && !taken
   return (
     <article className={cx('room-row', !open && 'off')}>
-      <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
+      <Photo src={room.photos[0]} alt={`Phòng ${room.type}`} />
       <div>
-        <h2>
-          Phòng {room.number} · {room.type}
-        </h2>
+        <h2>Phòng {room.type}</h2>
         <p className="room-place">
           <MapPin size={14} />
           {place?.name} · Cách {place ? place.distance.toString().replace('.', ',') : ''} km
@@ -328,7 +328,7 @@ function RoomChoice({
         {open ? (
           <span className="pill pill-upcoming">Còn trống</span>
         ) : (
-          <span className="pill pill-expired">{taken ? 'Đã có khách trong khung giờ này' : 'Không khả dụng trong khung giờ này'}</span>
+          <span className="pill pill-expired">{room.available ? 'Đã có khách trong khung giờ này' : 'Không khả dụng trong khung giờ này'}</span>
         )}
       </div>
       <div className="room-row-end">
@@ -344,7 +344,7 @@ function RoomChoice({
           </button>
         ) : (
           <button type="button" className="btn btn-muted" disabled>
-            {taken ? 'Đã có khách' : 'Không khả dụng'}
+            {room.available ? 'Đã có khách' : 'Không khả dụng'}
           </button>
         )}
       </div>

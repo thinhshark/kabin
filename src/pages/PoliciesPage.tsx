@@ -1,7 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
 import { FileText, Headphones } from 'lucide-react'
 import { POLICIES } from '../data'
-import { useTitle } from '../components/ui'
+import { RefundTable } from '../components/StayRules'
+import { Accordion, useTitle } from '../components/ui'
 
 export function PoliciesPage() {
   const { id } = useParams()
@@ -25,6 +26,29 @@ export function PoliciesPage() {
         </aside>
         <article className="panel">
           <h2>{current.title}</h2>
+          {current.id === 'doi-huy' ? (
+            <Accordion
+              items={current.blocks.map((block, index) => ({
+                title: `${String(index + 1).padStart(2, '0')}. ${block.title}`,
+                content:
+                  block.title === 'Sau khi đã nhận tiền' ? (
+                    <RefundTable heading={false} />
+                  ) : (
+                    <>
+                      {block.body ? <p>{block.body}</p> : null}
+                      {block.highlight ? <p className="callout">{block.highlight}</p> : null}
+                      {block.bullets ? (
+                        <ul>
+                          {block.bullets.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </>
+                  ),
+              }))}
+            />
+          ) : (
           <ol className="policy-list">
             {current.blocks.map((block, index) => (
               <li key={block.title}>
@@ -46,6 +70,7 @@ export function PoliciesPage() {
               </li>
             ))}
           </ol>
+          )}
           <div className="help-bar">
             <strong>Bạn cần giải thích thêm?</strong>
             <div>

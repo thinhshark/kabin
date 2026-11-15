@@ -82,30 +82,30 @@ export function GuidePage() {
           <img src={PHOTOS.gateLock} alt="Khóa mã trên cổng" />
           <span>02</span>
           <h2>Mở cổng</h2>
-          <p>Nhập mã cổng trên bàn phím khóa, kể cả phím #.</p>
+          <p>Nhập mã cổng và phòng trên bàn phím khóa, kể cả dấu #.</p>
           {showCodes ? (
             <div className="code-box">
-              <span>Mã cổng</span>
+              <span>Mã cổng và phòng</span>
               <strong>{booking?.gateCode}</strong>
               <CopyButton value={booking?.gateCode ?? ''} quiet />
             </div>
           ) : (
-            <p className="hint">Mã cổng hiện trên vé sau khi booking được xác nhận.</p>
+            <p className="hint">Mã hiện trên vé sau khi booking được xác nhận.</p>
           )}
         </article>
         <article className="guide-card">
           <img src={PHOTOS.roomLock} alt="Khóa mã trên cửa phòng" />
           <span>03</span>
-          <h2>{room?.number ? `Nhập mã phòng ${room.number}` : 'Nhập mã phòng'}</h2>
-          <p>Kiểm tra đúng số phòng và nhập mã để mở cửa.</p>
+          <h2>{room?.number ? `Mở phòng ${room.number}` : 'Mở phòng'}</h2>
+          <p>Kiểm tra đúng số phòng và nhập lại đúng mã vừa dùng ở cổng.</p>
           {showCodes ? (
             <div className="code-box">
-              <span>Mã phòng {room?.number}</span>
-              <strong>{booking?.roomCode}</strong>
-              <CopyButton value={booking?.roomCode ?? ''} quiet />
+              <span>Mã cổng và phòng</span>
+              <strong>{booking?.gateCode}</strong>
+              <CopyButton value={booking?.gateCode ?? ''} quiet />
             </div>
           ) : (
-            <p className="hint">Mã phòng đi kèm mã cổng trên cùng một vé.</p>
+            <p className="hint">Cửa phòng dùng cùng mã với cổng.</p>
           )}
         </article>
       </div>

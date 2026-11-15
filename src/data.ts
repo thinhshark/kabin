@@ -1,5 +1,5 @@
 import { asset, clockMinutes, formatMoney, shiftISO, todayISO } from './utils'
-import { listedFrom, listedHourly, listedOvernight, type RateBand } from './priceList'
+import { listedFrom, listedHourly, listedOvernight, type PriceKind, type RateBand } from './priceList'
 
 export type Amenity =
   | 'Máy chiếu'
@@ -30,7 +30,7 @@ export type Room = {
   id: string
   locationId: string
   number: string
-  type: 'Cozy' | 'Cinema' | 'Relax'
+  type: 'Classic' | 'Cozy' | 'Signature' | 'Cinema' | 'Relax'
   amenities: Amenity[]
   price3h: number
   available: boolean
@@ -106,9 +106,24 @@ export const PHOTOS = {
   promo: asset('/photos/promo.jpg'),
 }
 
+function roomShots(folder: string, count: number) {
+  return Array.from({ length: count }, (_, index) =>
+    asset(`/photos/rooms/${folder}/${String(index + 1).padStart(2, '0')}.jpg`),
+  )
+}
+
+export const CLASSIC_PHOTOS = roomShots('classic', 7)
+export const COZY_PHOTOS = roomShots('cozy', 6)
+export const SIGNATURE_PHOTOS = roomShots('signature', 6)
+
+function gallery(photos: string[], shift = 0) {
+  const start = shift % photos.length
+  return [...photos.slice(start), ...photos.slice(0, start)]
+}
+
 export const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00']
 export const DURATIONS = [2, 3, 4, 5, 6]
-export const DISTRICTS = ['Cầu Giấy', 'Tây Hồ', 'Ba Đình', 'Đống Đa']
+export const DISTRICTS = ['Cầu Giấy', 'Tây Hồ', 'Ba Đình', 'Xã Đàn']
 export const FILTER_AMENITIES: Amenity[] = [
   'Máy chiếu',
   'Bồn tắm',
@@ -136,6 +151,7 @@ export const LOCATIONS: Location[] = [
       'Không gian ấm cúng, đầy đủ tiện nghi để nghỉ ngơi, xem phim và tận hưởng thời gian của bạn.',
     cover: PHOTOS.cozy,
     photos: [PHOTOS.cozy, PHOTOS.cinema, PHOTOS.bath],
+    openingSoon: true,
   },
   {
     id: 'tay-ho',
@@ -163,19 +179,20 @@ export const LOCATIONS: Location[] = [
       'Một căn phòng đủ ánh sáng và máy chiếu cho giấc ngắn hoặc một buổi tối riêng. Vào cửa bằng mã sau khi thanh toán.',
     cover: PHOTOS.cinema,
     photos: [PHOTOS.cinema, PHOTOS.cozy, PHOTOS.corner],
+    openingSoon: true,
   },
   {
     id: 'dong-da',
-    name: 'Kabin Đống Đa',
-    district: 'Đống Đa',
+    name: 'Kabin Xã Đàn',
+    district: 'Xã Đàn',
     city: 'Hà Nội',
     distance: 5.1,
     amenities: ['Chỗ để oto', 'Mini mart', 'Ban công', 'Boardgame'],
     blurb: 'Gần trung tâm, có chỗ để xe',
     description:
       'Phù hợp nếu bạn cần nghỉ vài giờ giữa ngày. Có chỗ để xe và mã cửa gửi ngay khi booking được xác nhận.',
-    cover: PHOTOS.corner,
-    photos: [PHOTOS.corner, PHOTOS.cozy, PHOTOS.bath],
+    cover: CLASSIC_PHOTOS[0],
+    photos: [CLASSIC_PHOTOS[0], COZY_PHOTOS[0], SIGNATURE_PHOTOS[0]],
   },
 ]
 
@@ -190,7 +207,7 @@ export const ROOMS: Room[] = [
     available: true,
     description:
       'Không gian được thiết kế ấm áp với tông gỗ và ánh sáng dịu nhẹ, mang đến cảm giác thoải mái và riêng tư cho những khoảng nghỉ ngơi ngắn.',
-    photos: [PHOTOS.cozy, PHOTOS.corner, PHOTOS.bath],
+    photos: gallery(COZY_PHOTOS, 0),
   },
   {
     id: 'r202',
@@ -212,7 +229,7 @@ export const ROOMS: Room[] = [
     price3h: 199000,
     available: false,
     description: 'Phòng Cozy cùng tầng, hiện đã có khách trong khung giờ đang chọn.',
-    photos: [PHOTOS.corner, PHOTOS.cozy, PHOTOS.bath],
+    photos: gallery(COZY_PHOTOS, 1),
   },
   {
     id: 'r301',
@@ -234,7 +251,7 @@ export const ROOMS: Room[] = [
     price3h: 249000,
     available: true,
     description: 'Phòng nhỏ, yên, nhìn về phía hồ. Phù hợp nghỉ trưa hoặc tối ngắn.',
-    photos: [PHOTOS.cozy, PHOTOS.corner, PHOTOS.bath],
+    photos: gallery(COZY_PHOTOS, 2),
   },
   {
     id: 'r101',
@@ -245,7 +262,7 @@ export const ROOMS: Room[] = [
     price3h: 229000,
     available: true,
     description: 'Phòng ấm, cách phố một lớp rèm. Tự nhận phòng bằng mã cổng và mã cửa.',
-    photos: [PHOTOS.cozy, PHOTOS.bath, PHOTOS.corner],
+    photos: gallery(COZY_PHOTOS, 3),
   },
   {
     id: 'r102',
@@ -259,26 +276,70 @@ export const ROOMS: Room[] = [
     photos: [PHOTOS.cinema, PHOTOS.cozy, PHOTOS.corner],
   },
   {
-    id: 'r401',
+    id: 'xd201',
     locationId: 'dong-da',
-    number: '401',
-    type: 'Cozy',
-    amenities: ['Chỗ để oto'],
-    price3h: 199000,
+    number: 'XD201',
+    type: 'Classic',
+    amenities: [],
+    price3h: listedFrom('lake'),
     available: true,
-    description: 'Phòng gọn, có chỗ để xe tại cơ sở. Nhận và trả phòng bằng mã, không cần lễ tân.',
-    photos: [PHOTOS.corner, PHOTOS.cozy, PHOTOS.bath],
+    description: 'Phòng Classic, hạng view hồ. Không gian gọn cho khoảng nghỉ ngắn.',
+    photos: gallery(CLASSIC_PHOTOS, 0),
   },
   {
-    id: 'r402',
+    id: 'xd301',
     locationId: 'dong-da',
-    number: '402',
+    number: 'XD301',
+    type: 'Classic',
+    amenities: [],
+    price3h: listedFrom('lake'),
+    available: true,
+    description: 'Phòng Classic, hạng view hồ, cùng tiện nghi của cơ sở.',
+    photos: gallery(CLASSIC_PHOTOS, 1),
+  },
+  {
+    id: 'xd401',
+    locationId: 'dong-da',
+    number: 'XD401',
+    type: 'Classic',
+    amenities: [],
+    price3h: listedFrom('lake'),
+    available: true,
+    description: 'Phòng Classic, hạng view hồ. Tự nhận phòng bằng mã cửa.',
+    photos: gallery(CLASSIC_PHOTOS, 2),
+  },
+  {
+    id: 'xd501',
+    locationId: 'dong-da',
+    number: 'XD501',
     type: 'Cozy',
     amenities: [],
-    price3h: 199000,
+    price3h: listedFrom('bench'),
     available: true,
-    description: 'Cùng mức giá Cozy, đủ tiện ích của cơ sở.',
-    photos: [PHOTOS.cozy, PHOTOS.bath, PHOTOS.corner],
+    description: 'Phòng Cozy, view hồ, có băng ghế gỗ gần cửa sổ.',
+    photos: gallery(COZY_PHOTOS, 0),
+  },
+  {
+    id: 'xd701',
+    locationId: 'dong-da',
+    number: 'XD701',
+    type: 'Cozy',
+    amenities: [],
+    price3h: listedFrom('bench'),
+    available: true,
+    description: 'Phòng Cozy, view hồ, có băng ghế gỗ gần cửa sổ.',
+    photos: gallery(COZY_PHOTOS, 1),
+  },
+  {
+    id: 'xd601',
+    locationId: 'dong-da',
+    number: 'XD601',
+    type: 'Signature',
+    amenities: ['Bồn tắm'],
+    price3h: listedFrom('bath'),
+    available: true,
+    description: 'Phòng Signature, view hồ và bồn tắm.',
+    photos: gallery(SIGNATURE_PHOTOS, 0),
   },
 ]
 
@@ -288,9 +349,9 @@ export function roomAmenities(room: Room): Amenity[] {
 }
 
 export const ROOM_TYPES: Array<{ type: Room['type']; priceFrom: number; amenities: string; photo: string }> = [
-  { type: 'Cozy', priceFrom: listedFrom('lake'), amenities: '', photo: PHOTOS.cozy },
-  { type: 'Cinema', priceFrom: listedFrom('lake'), amenities: 'Máy chiếu', photo: PHOTOS.cinema },
-  { type: 'Relax', priceFrom: listedFrom('bath'), amenities: 'Bồn tắm', photo: PHOTOS.relax },
+  { type: 'Classic', priceFrom: listedFrom('lake'), amenities: 'View hồ', photo: CLASSIC_PHOTOS[0] },
+  { type: 'Cozy', priceFrom: listedFrom('bench'), amenities: 'Băng ghế gỗ gần cửa sổ', photo: COZY_PHOTOS[0] },
+  { type: 'Signature', priceFrom: listedFrom('bath'), amenities: 'Bồn tắm', photo: SIGNATURE_PHOTOS[0] },
 ]
 
 export const PROMOS: Promo[] = [
@@ -301,7 +362,7 @@ export const PROMOS: Promo[] = [
     value: 10,
     cap: 30000,
     min: 199000,
-    locationId: 'cau-giay',
+    locationId: 'dong-da',
     until: shiftISO(15),
   },
   {
@@ -310,7 +371,7 @@ export const PROMOS: Promo[] = [
     kind: 'amount',
     value: 30000,
     min: 249000,
-    locationId: 'cau-giay',
+    locationId: 'dong-da',
     until: shiftISO(15),
   },
   {
@@ -319,8 +380,56 @@ export const PROMOS: Promo[] = [
     kind: 'amount',
     value: 20000,
     min: 299000,
-    locationId: 'cau-giay',
+    locationId: 'dong-da',
     until: shiftISO(-1),
+  },
+]
+
+export const REFUND_POINTS = [
+  'Ngày thường, hủy trước giờ nhận phòng ít nhất 8 tiếng: hoàn 100% tiền.',
+  'Ngày thường, hủy trước giờ nhận phòng ít nhất 4 tiếng: hoàn 50% tiền.',
+  'Ngày thường, hủy dưới 4 tiếng: không hoàn tiền.',
+  'Ngày lễ, hủy trước giờ nhận phòng ít nhất 24 tiếng: hoàn 100% tiền. Hủy trong vòng 24 tiếng: không hoàn tiền.',
+]
+
+export const REFUND_NOTE = 'Thời điểm hủy được tính theo giờ nhận phòng đã đặt.'
+
+export const KEY_RULES = [
+  { id: 'pet', title: 'Không thú cưng', text: 'Không mang theo thú cưng' },
+  { id: 'people', title: 'Tối đa 2 người', text: 'Mỗi phòng tối đa 2 người' },
+  { id: 'age', title: 'Trên 16 tuổi', text: 'Chỉ nhận khách trên 16 tuổi' },
+  { id: 'smoke', title: 'Cấm hút thuốc', text: 'Nghiêm cấm hút thuốc' },
+] as const
+
+export const HOUSE_RULES = [
+  'Lưu trú đúng số lượng khách đã đăng ký. Mỗi phòng tối đa 2 người.',
+  'Chỉ nhận khách từ 16 tuổi trở lên.',
+  'Giữ gìn vệ sinh chung: không vứt rác bừa bãi, bỏ rác đúng nơi quy định.',
+  'Không làm bẩn không gian phòng. Tránh để chất bẩn có màu dính lên chăn ga, khăn, sofa, tường và đồ trang trí.',
+  'Không mang xe điện và không sạc xe điện tại cơ sở.',
+  'Ra ngoài vui lòng đóng cửa và khóa đúng quy định.',
+  'Giữ trật tự, đặc biệt sau 22:00.',
+  'Không tự ý di dời, tháo dỡ trang thiết bị và đồ đạc trong phòng.',
+  'Khi trả phòng, tắt toàn bộ thiết bị điện, khóa cửa và kiểm tra tài sản cá nhân. Kabin không chịu trách nhiệm nếu đồ cá nhân bị mất.',
+]
+
+export const BAN_GROUPS: { penalty: string; items: string[] }[] = [
+  {
+    penalty: 'Phạt từ 200.000đ đến 1.000.000đ khi phát hiện',
+    items: [
+      'Không hút thuốc, sử dụng chất gây cháy hoặc nổ trong cơ sở',
+      'Không tự ý di chuyển đồ đạc, máy chiếu',
+      'Không tự ý cung cấp mật mã cho người ngoài ra vào',
+      'Không mang theo thú cưng',
+      'Không làm bẩn hoặc dùng sai mục đích sofa, chăn, gối, nệm, rèm, tường và đồ trang trí',
+    ],
+  },
+  {
+    penalty: 'Ngừng phục vụ và mời ra khỏi cơ sở',
+    items: [
+      'Tuyệt đối không mang hoặc sử dụng chất kích thích, chất cấm',
+      'Tuyệt đối không tổ chức cờ bạc hoặc hành vi vi phạm pháp luật',
+    ],
   },
 ]
 
@@ -335,7 +444,7 @@ export const FAQS: Faq[] = [
     id: 'code',
     topic: 'Nhận phòng',
     q: 'Tôi nhận mã mở cửa ở đâu?',
-    a: 'Sau khi booking được xác nhận, mã cổng và mã phòng hiện trên vé. Khách đặt qua web nhận thêm thông tin qua SMS.',
+    a: 'Sau khi booking được xác nhận, một mã dùng chung cho cổng và cửa phòng hiện trên vé. Khách đặt qua web nhận thêm thông tin qua SMS.',
   },
   {
     id: 'account',
@@ -353,7 +462,7 @@ export const FAQS: Faq[] = [
     id: 'door',
     topic: 'Nhận phòng',
     q: 'Tôi không mở được cửa, cần làm gì?',
-    a: 'Kiểm tra đúng mã cổng và mã phòng, gồm cả dấu #. Nếu vẫn không vào được, bấm liên hệ hỗ trợ và đọc mã đặt phòng.',
+    a: 'Cổng và cửa phòng dùng chung một mã, gồm cả dấu #. Nếu vẫn không vào được, bấm liên hệ hỗ trợ và đọc mã đặt phòng.',
   },
   {
     id: 'otp',
@@ -371,13 +480,13 @@ export const FAQS: Faq[] = [
     id: 'cancel-rate',
     topic: 'Hủy phòng',
     q: 'Hủy phòng được hoàn bao nhiêu?',
-    a: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền. Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+    a: 'Ngày thường, hủy trước giờ nhận phòng ít nhất 8 tiếng: hoàn 100% tiền. Hủy trước ít nhất 4 tiếng: hoàn 50% tiền. Hủy dưới 4 tiếng: không hoàn tiền. Ngày lễ cần hủy trước ít nhất 24 tiếng để được hoàn 100% tiền; hủy trong vòng 24 tiếng thì không hoàn tiền.',
   },
   {
     id: 'cancel-weekend',
     topic: 'Hủy phòng',
-    q: 'Cuối tuần và ngày lễ có được hoàn tiền không?',
-    a: 'Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+    q: 'Ngày lễ hủy phòng được hoàn tiền không?',
+    a: 'Ngày lễ cần hủy trước giờ nhận phòng ít nhất 24 tiếng để được hoàn 100% tiền. Hủy trong vòng 24 tiếng thì không hoàn tiền. Ngày thường áp dụng mốc 8 tiếng và 4 tiếng.',
   },
   {
     id: 'cancel-how',
@@ -407,7 +516,7 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Nhận thông tin vào phòng',
-        body: 'Mã cổng và mã phòng được gửi sau khi booking được xác nhận. Khách dùng app xem trên vé; khách đặt qua web nhận SMS.',
+        body: 'Một mã dùng chung cho cổng và cửa phòng được gửi sau khi booking được xác nhận. Khách xem trên vé hoặc nhận SMS.',
       },
     ],
   },
@@ -419,13 +528,36 @@ export const POLICIES: Policy[] = [
         title: 'Tự nhận phòng',
         bullets: [
           'Đến đúng cơ sở trên vé.',
-          'Nhập mã cổng tại bàn phím khóa sảnh.',
-          'Nhập mã phòng tại cửa phòng đã đặt.',
+          'Nhập mã cổng và phòng tại bàn phím khóa sảnh.',
+          'Dùng lại đúng mã đó tại cửa phòng đã đặt.',
         ],
       },
       {
         title: 'Trả phòng',
         body: 'Rời phòng đúng giờ trên vé. Khóa cửa khi ra về. Không cần trả chìa khóa.',
+      },
+    ],
+  },
+  {
+    id: 'noi-quy',
+    title: 'Nội quy cơ sở',
+    blocks: [
+      {
+        title: 'Quy định nổi bật',
+        highlight: 'Không mang thú cưng. Mỗi phòng tối đa 2 người. Chỉ nhận khách trên 16 tuổi. Nghiêm cấm hút thuốc.',
+      },
+      {
+        title: 'Nội quy lưu trú',
+        bullets: HOUSE_RULES,
+      },
+      {
+        title: 'Quy định cấm',
+        bullets: BAN_GROUPS.flatMap((group) => group.items.map((item) => `${item}. ${group.penalty}.`)),
+      },
+      {
+        title: 'Thời gian lưu trú',
+        body: 'Trả phòng muộn quá 30 phút sẽ phụ thu 200.000đ. Nếu muốn dùng thêm phòng, quý khách quét mã QR hoặc đặt thêm qua web/app khi khung giờ tiếp theo còn trống và chưa có khách đặt. Quá số người đã đăng ký mà không báo: phạt 200.000đ.',
+        highlight: 'Hotline hỗ trợ: 1800.2230',
       },
     ],
   },
@@ -439,8 +571,8 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Sau khi đã nhận tiền',
-        body: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền.',
-        highlight: 'Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+        body: REFUND_POINTS.join(' '),
+        highlight: REFUND_NOTE,
       },
     ],
   },
@@ -454,7 +586,7 @@ export const POLICIES: Policy[] = [
       },
       {
         title: 'Mã cửa',
-        body: 'Mã cổng và mã phòng chỉ hiển thị với khách của booking đã xác nhận. Hết thời gian sử dụng, mã không còn hiệu lực.',
+        body: 'Mã cổng và phòng chỉ hiển thị với khách của booking đã xác nhận. Hết thời gian sử dụng, mã không còn hiệu lực.',
       },
     ],
   },
@@ -486,8 +618,31 @@ export function roomsAt(locationId: string) {
   return ROOMS.filter((item) => item.locationId === locationId)
 }
 
-export function rateKind(room: Pick<Room, 'type' | 'amenities'>): 'lake' | 'bath' {
-  return room.type === 'Relax' || room.amenities.includes('Bồn tắm') ? 'bath' : 'lake'
+export function locationsOpenFirst<T extends { openingSoon?: boolean }>(locations: T[]) {
+  return [...locations].sort((a, b) => Number(Boolean(a.openingSoon)) - Number(Boolean(b.openingSoon)))
+}
+
+export function typeOffers<T extends Room>(rooms: T[], isOpen: (room: T) => boolean) {
+  const order: string[] = []
+  const groups = new Map<string, T[]>()
+  for (const room of rooms) {
+    const key = `${room.locationId}\0${room.type}`
+    if (!groups.has(key)) order.push(key)
+    const list = groups.get(key) ?? []
+    list.push(room)
+    groups.set(key, list)
+  }
+  return order.map((key) => {
+    const list = groups.get(key) ?? []
+    const open = list.find(isOpen)
+    return { room: open ?? list[0], open: Boolean(open) }
+  })
+}
+
+export function rateKind(room: Pick<Room, 'type' | 'amenities'>): PriceKind {
+  if (room.type === 'Signature' || room.type === 'Relax' || room.amenities.includes('Bồn tắm')) return 'bath'
+  if (room.type === 'Cozy') return 'bench'
+  return 'lake'
 }
 
 function stayWeekday(date: string) {
@@ -587,13 +742,12 @@ export function quoteOf(
 
 export function refundEstimate(booking: Booking, now = new Date()) {
   const paid = Math.max(0, booking.price - booking.discount)
-  const day = new Date(`${booking.date}T12:00:00`)
-  const weekend = day.getDay() === 0 || day.getDay() === 6
-  if (weekend || HOLIDAYS.has(booking.date)) return { amount: 0, paid }
   const start = new Date(`${booking.date}T${booking.time}:00`)
   const remaining = start.getTime() - now.getTime()
-  if (remaining >= 12 * 3600000) return { amount: paid, paid }
-  if (remaining >= 2 * 3600000) return { amount: Math.round(paid / 2), paid }
+  const hour = 3600000
+  if (HOLIDAYS.has(booking.date)) return { amount: remaining >= 24 * hour ? paid : 0, paid }
+  if (remaining >= 8 * hour) return { amount: paid, paid }
+  if (remaining >= 4 * hour) return { amount: Math.round(paid / 2), paid }
   return { amount: 0, paid }
 }
 
@@ -669,7 +823,7 @@ export const SEED_BOOKINGS: Booking[] = [
     email: 'minhanh@example.com',
     status: 'upcoming',
     gateCode: '246810#',
-    roomCode: '731942#',
+    roomCode: '246810#',
     paymentRef: 'KABIN8K2M',
   },
   {
@@ -687,7 +841,7 @@ export const SEED_BOOKINGS: Booking[] = [
     email: 'minhanh@example.com',
     status: 'done',
     gateCode: '135790#',
-    roomCode: '246801#',
+    roomCode: '135790#',
     paymentRef: 'KABIN4N7Q',
   },
   {

@@ -69,7 +69,7 @@ export function PriceBoard() {
       <div className="overnight-board">
         <div>
           <strong>Qua đêm</strong>
-          <span>22h–9h sáng hôm sau</span>
+          <span>22h–10h sáng hôm sau</span>
         </div>
         <table className="rate-table overnight-table">
           <thead>
@@ -91,8 +91,8 @@ export function PriceBoard() {
         </table>
       </div>
       <div className="price-notes">
-        <p>Theo giờ: tính theo giờ nhận phòng. Sau 8 giờ, mỗi giờ thêm 30.000đ đến khi chạm giá gói 24 giờ.</p>
-        <p>Qua đêm: tính theo ngày bắt đầu đêm.</p>
+        <p>Theo giờ tính theo giờ nhận phòng. Sau 8 giờ, cộng 30.000đ mỗi giờ đến khi chạm giá gói 24 giờ.</p>
+        <p>Qua đêm tính theo ngày bắt đầu đêm.</p>
       </div>
     </div>
   )

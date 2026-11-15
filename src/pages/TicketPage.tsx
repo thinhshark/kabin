@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { BadgeCheck, MapPin, Phone, ScrollText } from 'lucide-react'
+import { BadgeCheck, Download, MapPin, Phone, ScrollText } from 'lucide-react'
+import { StayRules } from '../components/StayRules'
 import { displayStatus, getLocation, getRoom } from '../data'
 import { useStore } from '../store'
+import { downloadTicketImage, ticketImageFromBooking } from '../ticketImage'
 import { CopyButton, Photo, useTitle } from '../components/ui'
 import { checkoutLabel, durationText, formatDate, formatMoney, mapsUrl, maskPhone } from '../utils'
 
 export function TicketPage() {
   const { code = '' } = useParams()
-  const { bookings } = useStore()
+  const { bookings, showToast } = useStore()
   const booking = bookings.find((item) => item.code === code)
   useTitle(booking ? 'Vé đặt phòng' : 'Không thấy vé')
+  const [policyOpen, setPolicyOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   if (!booking) {
     return (
@@ -30,7 +34,6 @@ export function TicketPage() {
   const end = checkoutLabel(booking.time, booking.duration)
   const total = Math.max(0, booking.price - booking.discount)
   const showCodes = (status === 'upcoming' || status === 'active') && Boolean(booking.gateCode)
-  const [policyOpen, setPolicyOpen] = useState(false)
 
   return (
     <div className="wrap page">
@@ -107,9 +110,8 @@ export function TicketPage() {
           {showCodes ? (
             <>
               <h2>Mã vào cửa</h2>
-              <p className="hint">Sử dụng các mã dưới đây để vào cổng tòa nhà và phòng nghỉ.</p>
-              <CodeBox label="Mã cổng" value={booking.gateCode} />
-              <CodeBox label={`Mã phòng ${room?.number ?? ''}`} value={booking.roomCode} />
+              <p className="hint">Cổng và cửa phòng dùng chung một mã. Nhập đủ dấu #.</p>
+              <CodeBox label="Mã cổng và phòng" value={booking.gateCode} />
               <Link to={`/huong-dan/${booking.code}`} className="btn btn-primary btn-block">
                 Hướng dẫn nhận phòng
               </Link>
@@ -119,7 +121,7 @@ export function TicketPage() {
               <h2>{status === 'pending' ? 'Chưa có mã cửa' : 'Mã cửa không còn hiệu lực'}</h2>
               <p>
                 {status === 'pending'
-                  ? 'Mã cổng và mã phòng được gửi khi booking được xác nhận.'
+                  ? 'Mã cổng và phòng được gửi khi booking được xác nhận.'
                   : 'Bạn có thể đặt lại một khung giờ còn trống.'}
               </p>
               <Link to={location ? `/co-so/${location.id}/chon-phong` : '/co-so'} className="btn btn-primary btn-block">
@@ -127,6 +129,20 @@ export function TicketPage() {
               </Link>
             </>
           )}
+          <button
+            type="button"
+            className="btn btn-line btn-block"
+            disabled={saving}
+            onClick={() => {
+              setSaving(true)
+              downloadTicketImage(ticketImageFromBooking(booking))
+                .then(() => showToast('Đã lưu vé'))
+                .catch(() => showToast('Không lưu được ảnh vé'))
+                .finally(() => setSaving(false))
+            }}
+          >
+            <Download size={16} /> {saving ? 'Đang lưu...' : 'Lưu vé'}
+          </button>
           <div className="btn-row ticket-actions">
             {location ? (
               <a className="btn btn-line" href={mapsUrl(location.name, location.district)} target="_blank" rel="noreferrer">
@@ -145,17 +161,12 @@ export function TicketPage() {
       </div>
       {policyOpen ? (
         <div className="modal-root" role="presentation" onClick={() => setPolicyOpen(false)}>
-          <div className="modal-card align-left" role="dialog" aria-modal="true" aria-labelledby="refund-policy-title" onClick={(event) => event.stopPropagation()}>
+          <div className="modal-card align-left rules-dialog" role="dialog" aria-modal="true" aria-labelledby="refund-policy-title" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="modal-x" onClick={() => setPolicyOpen(false)} aria-label="Đóng">
               ×
             </button>
-            <h2 id="refund-policy-title">Chính sách hoàn hủy</h2>
-            <ul className="policy-note">
-              <li>Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền.</li>
-              <li>Hủy trước từ 2-12 tiếng: hoàn 50% tiền.</li>
-              <li>Hủy dưới 2 tiếng: không hoàn tiền.</li>
-            </ul>
-            <p className="hint">Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.</p>
+            <h2 id="refund-policy-title">Nội quy và hoàn hủy</h2>
+            <StayRules mode="brief" />
             <div className="stack-buttons">
               <button type="button" className="btn btn-primary" onClick={() => setPolicyOpen(false)}>
                 Đã hiểu

@@ -32,7 +32,7 @@ export function ExpiredPage() {
               <span className="pill pill-expired">Hết hạn</span>
             </div>
             <p>
-              Phòng {quoted.room.number} · {quoted.room.type}
+              Phòng {quoted.room.type}
             </p>
             <ul className="facts">
               <li>
@@ -131,7 +131,7 @@ export function LatePage() {
           <div>
             <h2>{quoted.location.name}</h2>
             <p>
-              Phòng {quoted.room.number} · {quoted.room.type}
+              Phòng {quoted.room.type}
             </p>
             <p>
               {formatDate(draft.date)} · {draft.time}–{end.text} ({durationText(draft.duration)})

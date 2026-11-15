@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowUp, Calendar, Clock, Hourglass, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
-import { LOCATIONS, PHOTOS, ROOM_TYPES } from '../data'
+import { LOCATIONS, locationsOpenFirst, PHOTOS, ROOM_TYPES } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -19,9 +19,11 @@ export function HomePage() {
   const [district, setDistrict] = useState('Tất cả')
   const [showTop, setShowTop] = useState(false)
   const districts = ['Tất cả', ...new Set(LOCATIONS.map((item) => item.district))]
-  const places = LOCATIONS.filter((item) => district === 'Tất cả' || item.district === district).sort(
-    (a, b) => a.distance - b.distance,
-  )
+  const places = LOCATIONS.filter((item) => district === 'Tất cả' || item.district === district).sort((a, b) => {
+    const soon = Number(Boolean(a.openingSoon)) - Number(Boolean(b.openingSoon))
+    if (soon !== 0) return soon
+    return a.distance - b.distance
+  })
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 640)
@@ -83,7 +85,7 @@ export function HomePage() {
                 value={location.id}
                 onChange={(event) => setDraft({ locationId: event.target.value, roomId: '' })}
               >
-                {LOCATIONS.map((item) => (
+                {locationsOpenFirst(LOCATIONS).map((item) => (
                   <option key={item.id} value={item.id} disabled={item.openingSoon}>
                     {item.openingSoon ? `${item.name} · Opening soon` : item.name}
                   </option>
@@ -188,7 +190,7 @@ export function HomePage() {
           <div>
             <p className="kicker">Điểm đến</p>
             <h2>Chọn cơ sở gần bạn</h2>
-            <p>Từ Cầu Giấy, Tây Hồ đến Ba Đình và Đống Đa. Mỗi cơ sở đều tự nhận phòng bằng mã cửa.</p>
+            <p>Từ Cầu Giấy, Tây Hồ đến Ba Đình và Xã Đàn. Mỗi cơ sở đều tự nhận phòng bằng mã cửa.</p>
           </div>
           <Link to="/co-so" className="text-btn">
             Xem hệ thống cơ sở <ArrowRight size={16} />
@@ -348,7 +350,7 @@ export function HomePage() {
           <article className="reason">
             <KeyRound size={20} />
             <h3>Tự nhận phòng bằng mã riêng</h3>
-            <p>Mã cổng và mã phòng chỉ dùng cho lần đặt của bạn. Đến nơi, nhập mã và vào phòng.</p>
+            <p>Một mã dùng cho cả cổng và cửa phòng, chỉ cho lần đặt của bạn. Đến nơi, nhập mã và vào phòng.</p>
           </article>
           <article className="reason">
             <Clock size={20} />

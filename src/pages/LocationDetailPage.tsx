@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
-import { getLocation, quotedStay, roomAmenities, roomTaken, roomsAt, TIMES } from '../data'
+import { getLocation, quotedStay, roomAmenities, roomTaken, roomsAt, TIMES, typeOffers } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -27,7 +27,10 @@ export function LocationDetailPage() {
     )
   }
 
-  const rooms = roomsAt(location.id).filter((room) => room.available)
+  const rooms = typeOffers(
+    roomsAt(location.id).filter((room) => room.available),
+    (room) => !roomTaken(room.id, draft.date, draft.time, draft.duration, bookings),
+  )
   const end = checkoutLabel(draft.time, draft.duration)
   const past = isPastSlot(draft.date, draft.time)
 
@@ -170,8 +173,7 @@ export function LocationDetailPage() {
             </span>
           </div>
           <div className="stack">
-            {rooms.map((room) => {
-              const taken = roomTaken(room.id, draft.date, draft.time, draft.duration, bookings)
+            {rooms.map(({ room, open }) => {
               const price = quotedStay(room, {
                 date: draft.date,
                 time: draft.time,
@@ -179,15 +181,13 @@ export function LocationDetailPage() {
                 overnight: draft.overnight,
               })
               return (
-              <article key={room.id} className="mini-room">
-                <Photo src={room.photos[0]} alt={`Phòng ${room.number}`} />
+              <article key={room.type} className="mini-room">
+                <Photo src={room.photos[0]} alt={`Phòng ${room.type}`} />
                 <div>
-                  <strong>
-                    Phòng {room.number} · {room.type}
-                  </strong>
+                  <strong>Phòng {room.type}</strong>
                   <p>{roomAmenities(room).join(' · ')}</p>
-                  <span className={location.openingSoon ? 'pill pill-pending' : taken ? 'pill pill-expired' : 'pill pill-upcoming'}>
-                    {location.openingSoon ? 'Opening soon' : taken ? 'Đã có khách' : 'Còn trống'}
+                  <span className={location.openingSoon ? 'pill pill-pending' : open ? 'pill pill-upcoming' : 'pill pill-expired'}>
+                    {location.openingSoon ? 'Opening soon' : open ? 'Còn trống' : 'Đã có khách'}
                   </span>
                 </div>
                 <div className="mini-room-end">
@@ -199,10 +199,12 @@ export function LocationDetailPage() {
                   </span>
                   {location.openingSoon ? (
                     <span className="btn btn-line btn-sm soon-disabled">Opening soon</span>
-                  ) : (
-                    <Link to={`/co-so/${location.id}/phong/${room.id}`} className="btn btn-primary btn-sm">
+                  ) : open ? (
+                    <Link to={`/co-so/${location.id}/phong/${encodeURIComponent(room.type)}`} className="btn btn-primary btn-sm">
                       Xem phòng <ArrowRight size={15} />
                     </Link>
+                  ) : (
+                    <span className="btn btn-muted btn-sm">Đã có khách</span>
                   )}
                 </div>
               </article>
@@ -213,7 +215,7 @@ export function LocationDetailPage() {
             items={[
               {
                 title: 'Hướng dẫn tự nhận phòng',
-                content: <p>Sau khi thanh toán thành công, dùng mã cổng để vào sảnh và mã phòng để mở cửa. Không cần quầy lễ tân.</p>,
+                content: <p>Sau khi thanh toán thành công, dùng một mã cho cả cổng và cửa phòng. Không cần quầy lễ tân.</p>,
               },
               {
                 title: 'Chính sách đặt phòng',

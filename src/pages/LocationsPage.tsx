@@ -19,6 +19,8 @@ export function LocationsPage() {
       return amenities.every((item) => location.amenities.includes(item))
     })
     list.sort((a, b) => {
+      const soon = Number(Boolean(a.openingSoon)) - Number(Boolean(b.openingSoon))
+      if (soon !== 0) return soon
       if (sort === 'price-asc') return priceFrom(a.id) - priceFrom(b.id)
       if (sort === 'price-desc') return priceFrom(b.id) - priceFrom(a.id)
       return a.distance - b.distance
@@ -103,7 +105,7 @@ export function LocationsPage() {
           ) : (
             <div className="loc-grid">
               {results.map((location) => (
-                <article key={location.id} className="loc-card">
+                <article key={location.id} className={location.openingSoon ? 'loc-card soon' : 'loc-card'}>
                   {location.openingSoon ? (
                     <span className="soon-frame">
                       <Photo src={location.cover} alt={location.name} />

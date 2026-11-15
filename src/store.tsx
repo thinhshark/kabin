@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { DEMO_PHONE, DEMO_USER, quoteOf, SEED_BOOKINGS, type Booking } from './data'
+import { DEMO_PHONE, DEMO_USER, getRoom, LOCATIONS, quoteOf, roomTaken, roomsAt, SEED_BOOKINGS, type Booking } from './data'
 import { checkoutLabel, isPastSlot, nextBookableSlot, normalizePhone, overnightStay, todayISO } from './utils'
 
 export type User = {
@@ -54,7 +54,7 @@ const KEY = 'kabin.v1'
 
 function emptyDraft(): Draft {
   return {
-    locationId: 'cau-giay',
+    locationId: 'dong-da',
     roomId: '',
     date: todayISO(),
     time: '14:00',
@@ -93,6 +93,14 @@ function load(): Persisted {
     if (!parsed.draft?.checkoutTime) {
       draft.checkoutTime = checkoutLabel(draft.time, draft.duration).time
     }
+    const place = LOCATIONS.find((item) => item.id === draft.locationId)
+    if (!place || place.openingSoon) {
+      const open = LOCATIONS.find((item) => !item.openingSoon)
+      if (open) {
+        draft.locationId = open.id
+        draft.roomId = ''
+      }
+    }
     return {
       user: parsed.user ?? null,
       bookings: withFreshSeeds(parsed.bookings),
@@ -109,7 +117,8 @@ function withFreshSeeds(saved: Persisted['bookings'] | undefined) {
   const seeds = new Map(SEED_BOOKINGS.map((booking) => [booking.id, booking]))
   const merged = saved.map((booking) => {
     const seed = seeds.get(booking.id)
-    return seed && seed.status === booking.status ? { ...booking, date: seed.date } : booking
+    const next = seed && seed.status === booking.status ? { ...booking, date: seed.date, gateCode: seed.gateCode, roomCode: seed.roomCode } : booking
+    return shareDoorCode(next)
   })
   for (const seed of SEED_BOOKINGS) {
     if (!merged.some((booking) => booking.id === seed.id)) merged.push(seed)
@@ -132,6 +141,12 @@ function paymentRef() {
 
 function doorCode() {
   return `${Math.floor(100000 + Math.random() * 900000)}#`
+}
+
+function shareDoorCode<T extends { gateCode: string; roomCode: string }>(booking: T): T {
+  const code = booking.gateCode || booking.roomCode
+  if (booking.gateCode === code && booking.roomCode === code) return booking
+  return { ...booking, gateCode: code, roomCode: code }
 }
 
 type Store = {
@@ -286,19 +301,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
     },
     startHold: () => {
-      setDraftState((current) => ({
-        ...current,
-        phase: 'holding',
-        holdUntil: Date.now() + 10 * 60 * 1000,
-        bookingCode: current.bookingCode || codeFrom(current.date),
-        paymentRef: current.paymentRef || paymentRef(),
-        gateCode: current.gateCode || doorCode(),
-        roomCode: current.roomCode || doorCode(),
-      }))
+      setDraftState((current) => {
+        const shared = current.gateCode || current.roomCode || doorCode()
+        return {
+          ...current,
+          phase: 'holding',
+          holdUntil: Date.now() + 10 * 60 * 1000,
+          bookingCode: current.bookingCode || codeFrom(current.date),
+          paymentRef: current.paymentRef || paymentRef(),
+          gateCode: shared,
+          roomCode: shared,
+        }
+      })
     },
     confirmPaid: () => {
       const current = draftRef.current
-      const quoted = quoteOf(current.roomId, current.duration, current.promoCode, {
+      const chosen = getRoom(current.roomId)
+      const roomId =
+        roomsAt(chosen?.locationId ?? current.locationId).find(
+          (room) =>
+            room.type === chosen?.type &&
+            room.available &&
+            !roomTaken(room.id, current.date, current.time, current.duration, bookings),
+        )?.id ?? current.roomId
+      const quoted = quoteOf(roomId, current.duration, current.promoCode, {
         date: current.date,
         time: current.time,
         overnight: current.overnight,
@@ -307,7 +333,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id: current.bookingCode,
         code: current.bookingCode,
         locationId: current.locationId,
-        roomId: current.roomId,
+        roomId,
         date: current.date,
         time: current.time,
         duration: current.duration,
@@ -321,7 +347,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         roomCode: current.roomCode,
         paymentRef: current.paymentRef,
       })
-      setDraftState((item) => ({ ...item, phase: 'paid' }))
+      setDraftState((item) => ({ ...item, phase: 'paid', roomId }))
       return current.bookingCode
     },
     expireHold: () => setDraftState((current) => ({ ...current, phase: 'expired', holdUntil: null })),

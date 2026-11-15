@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Phone } from 'lucide-react'
+import { REFUND_NOTE, REFUND_POINTS } from '../data'
 import { useTitle } from '../components/ui'
 
 const SECTIONS = [
@@ -13,14 +14,14 @@ const SECTIONS = [
   },
   {
     title: 'Mã cửa',
-    body: 'Mã cổng và mã phòng chỉ có hiệu lực trong khung giờ khách đã đặt. Nhập đủ cả dấu # ở cuối mỗi mã. Mã chỉ dùng cho lần đặt đó, không chia sẻ cho người ngoài.',
+    body: 'Cổng và cửa phòng dùng chung một mã, chỉ có hiệu lực trong khung giờ khách đã đặt. Nhập đủ dấu # ở cuối mã. Mã chỉ dùng cho lần đặt đó, không chia sẻ cho người ngoài.',
   },
   {
     title: 'Cách sử dụng',
     bullets: [
       'Đến đúng cơ sở trên thông tin đặt và vào khu cổng. Không cần quầy lễ tân.',
-      'Nhập mã cổng trên bàn phím khóa gắn tại cổng.',
-      'Tới đúng số phòng và nhập mã phòng trên bàn phím khóa gắn tại cửa phòng.',
+      'Nhập mã cổng và phòng trên bàn phím khóa gắn tại cổng.',
+      'Tới đúng số phòng và nhập lại đúng mã đó trên bàn phím khóa gắn tại cửa phòng.',
       'Mật khẩu Wi-Fi dán ở mặt trong cửa.',
     ],
   },
@@ -29,8 +30,12 @@ const SECTIONS = [
     body: 'Đến giờ trả phòng, quý khách vui lòng tắt điều hòa, đóng cửa trước khi rời phòng. Không cần trả chìa khóa.',
   },
   {
+    title: 'Nội quy',
+    body: 'Không mang thú cưng. Mỗi phòng tối đa 2 người. Chỉ nhận khách trên 16 tuổi. Nghiêm cấm hút thuốc. Khách giữ vệ sinh, khóa cửa khi ra ngoài và trả phòng đúng giờ.',
+  },
+  {
     title: 'Hủy và hoàn tiền',
-    body: 'Hủy trước giờ đã đặt ít nhất 12 tiếng: hoàn 100% tiền. Hủy trước từ 2-12 tiếng: hoàn 50% tiền. Hủy dưới 2 tiếng: không hoàn tiền. Chính sách hoàn tiền không áp dụng vào T7, CN và các ngày lễ.',
+    body: `${REFUND_POINTS.join(' ')} ${REFUND_NOTE}`,
   },
   {
     title: 'Đổi giờ và hỗ trợ',
@@ -70,7 +75,7 @@ export function TermsPage() {
           ))}
         </ol>
         <a className="btn btn-block hotline-btn" href="tel:18002230">
-          <Phone size={18} /> <span>Liên hệ Hotline hỗ trợ</span> <strong>1800.2230</strong>
+          <Phone size={18} /> Liên hệ hotline
         </a>
       </article>
     </div>

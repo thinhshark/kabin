@@ -41,7 +41,7 @@ export function stayHours(start: string, end: string) {
 }
 
 export const FULL_DAY_HOURS = 24
-export const OVERNIGHT_CHECKOUT = '09:00'
+export const OVERNIGHT_CHECKOUT = '10:00'
 
 export function fullDayStay(start: string) {
   return {

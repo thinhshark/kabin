@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { getLocation, getRoom, quotedStay, roomAmenities, roomTaken } from '../data'
+import { getLocation, getRoom, quotedStay, roomAmenities, roomTaken, roomsAt } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { PriceListLink } from '../components/PriceList'
@@ -13,9 +13,15 @@ import { clockMinutes, durationText, formatDate, formatMoney, FULL_DAY_HOURS, fu
 export function RoomDetailPage() {
   const { id = '', roomId = '' } = useParams()
   const location = getLocation(id)
-  const room = getRoom(roomId)
-  useTitle(room ? `Phòng ${room.number}` : 'Phòng')
   const { draft, setDraft, bookings } = useStore()
+  const param = decodeURIComponent(roomId)
+  const byId = getRoom(param)
+  const ofType = location ? roomsAt(location.id).filter((item) => item.type === param) : []
+  const room =
+    byId && byId.locationId === location?.id
+      ? byId
+      : ofType.find((item) => item.available && !roomTaken(item.id, draft.date, draft.time, draft.duration, bookings)) ?? ofType[0]
+  useTitle(room ? `Phòng ${room.type}` : 'Phòng')
   const navigate = useNavigate()
   const today = todayISO()
 
@@ -53,13 +59,13 @@ export function RoomDetailPage() {
           { label: 'Trang chủ', to: '/' },
           { label: 'Hệ thống cơ sở', to: '/co-so' },
           { label: location.name, to: `/co-so/${location.id}` },
-          { label: `Phòng ${room.number}` },
+          { label: `Phòng ${room.type}` },
         ]}
       />
       <div className="title-row">
         <div>
           <h1>
-            Phòng {room.number} · {room.type}
+            Phòng {room.type}
           </h1>
           <p className="meta-line">
             {location.name} · {location.city}
@@ -76,7 +82,7 @@ export function RoomDetailPage() {
       </div>
 
       <div className="detail room-detail">
-        <Gallery photos={room.photos} alt={`Phòng ${room.number}`} />
+        <Gallery photos={room.photos} alt={`Phòng ${room.type}`} />
         <aside className="book-widget">
           {location.openingSoon ? (
             <div className="soon-panel">
@@ -195,7 +201,7 @@ export function RoomDetailPage() {
               },
               {
                 title: 'Hướng dẫn tự nhận phòng',
-                content: <p>Mã cổng và mã phòng xuất hiện trên vé ngay sau khi chuyển khoản được ghi nhận.</p>,
+                content: <p>Mã cổng và phòng xuất hiện trên vé ngay sau khi chuyển khoản được ghi nhận.</p>,
               },
               {
                 title: 'Chính sách đặt phòng',
