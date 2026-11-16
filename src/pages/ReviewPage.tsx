@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react'
-import { quoteOf } from '../data'
+import { quoteOf, rateKind } from '../data'
 import { useStore } from '../store'
 import { PriceListLink } from '../components/PriceList'
+import type { PriceKind } from '../priceList'
 import { RefundTable, RuleFlags, StayRules } from '../components/StayRules'
 import { Photo, Stepper, useTitle } from '../components/ui'
 import { checkoutLabel, durationText, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
@@ -180,6 +181,9 @@ export function ReviewPage() {
                   </button>
                 ) : null}
               </span>
+              {draft.phoneVerified ? null : (
+                <span className="hint">Ấn vào nhận mã OTP để xác thực số điện thoại</span>
+              )}
               <span className="hint">Thông tin nhận phòng sẽ được gửi qua SMS.</span>
               {errors.phone ? <span className="form-error">{errors.phone}</span> : null}
             </label>
@@ -272,7 +276,7 @@ export function ReviewPage() {
                 {durationText(draft.duration)}
               </li>
             </ul>
-            <PayLines base={base} discount={discount} total={total} />
+            <PayLines base={base} discount={discount} total={total} kind={rateKind(room)} />
           </article>
           <div className="pay-stack">
             <label className="check agree">
@@ -435,7 +439,7 @@ function readIdPhoto(file: File) {
   })
 }
 
-function PayLines({ base, discount, total }: { base: number; discount: number; total: number }) {
+function PayLines({ base, discount, total, kind }: { base: number; discount: number; total: number; kind?: PriceKind }) {
   return (
     <div className="pay-lines">
       <div className="sum-row">
@@ -450,7 +454,7 @@ function PayLines({ base, discount, total }: { base: number; discount: number; t
         <span>Tổng thanh toán</span>
         <span className="price-stack">
           <b className="price">{formatMoney(total)}</b>
-          <PriceListLink />
+          <PriceListLink kind={kind} />
         </span>
       </div>
     </div>

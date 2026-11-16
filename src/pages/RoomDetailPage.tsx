@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Hourglass } from 'lucide-react'
-import { getLocation, getRoom, quotedStay, roomAmenities, roomTaken, roomsAt } from '../data'
+import { getLocation, getRoom, quotedStay, rateKind, roomAmenities, roomTaken, roomsAt } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { PriceListLink } from '../components/PriceList'
@@ -164,7 +164,7 @@ export function RoomDetailPage() {
               <b className="price">
                 {formatMoney(price)} <small>/ {stayLabel}</small>
               </b>
-              <PriceListLink />
+              <PriceListLink kind={rateKind(room)} />
             </span>
           </div>
           {past ? <p className="form-error">Khung giờ này đã qua.</p> : null}

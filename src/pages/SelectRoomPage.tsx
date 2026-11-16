@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, Info, MapPin, SlidersHorizontal } from 'lucide-react'
-import { FILTER_AMENITIES, getLocation, LOCATIONS, locationsOpenFirst, quotedStay, ROOMS, roomAmenities, roomTaken, roomsAt, typeOffers, type Amenity, type Room } from '../data'
+import { FILTER_AMENITIES, getLocation, LOCATIONS, locationsOpenFirst, quotedStay, rateKind, ROOMS, roomAmenities, roomTaken, roomsAt, typeOffers, type Amenity, type Room } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { PriceListLink } from '../components/PriceList'
@@ -336,7 +336,7 @@ function RoomChoice({
           <b className="price">
             {formatMoney(price)} <small>/ {stayLabel}</small>
           </b>
-          <PriceListLink />
+          <PriceListLink kind={rateKind(room)} />
         </span>
         {open ? (
           <button type="button" className="btn btn-primary" disabled={past} onClick={() => onOpen(room.locationId)}>

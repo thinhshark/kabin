@@ -644,6 +644,10 @@ export function typeOffers<T extends Room>(rooms: T[], isOpen: (room: T) => bool
   })
 }
 
+export function priceKindForType(type: Room['type']): PriceKind {
+  return rateKind({ type, amenities: [] })
+}
+
 export function rateKind(room: Pick<Room, 'type' | 'amenities'>): PriceKind {
   if (room.type === 'Signature' || room.type === 'Relax' || room.amenities.includes('Bồn tắm')) return 'bath'
   if (room.type === 'Cozy') return 'bench'

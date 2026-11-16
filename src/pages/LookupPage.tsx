@@ -113,6 +113,7 @@ export function LookupPage() {
             <button className="btn btn-primary btn-block" type="submit">
               Nhận mã OTP <ArrowRight size={16} />
             </button>
+            <p className="hint">Ấn vào nhận mã OTP để xác thực số điện thoại</p>
           </form>
         )}
         {unlocked ? null : (

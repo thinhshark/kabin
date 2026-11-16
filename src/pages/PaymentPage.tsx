@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Download, RefreshCw, Timer } from 'lucide-react'
-import { quoteOf } from '../data'
+import { quoteOf, rateKind } from '../data'
 import { useStore } from '../store'
 import { PriceListLink } from '../components/PriceList'
 import { CopyButton, DemoQr, Photo, useTitle } from '../components/ui'
@@ -168,7 +168,7 @@ export function PaymentPage() {
               <span>Tổng thanh toán</span>
               <span className="price-stack">
                 <b className="price">{formatMoney(total)}</b>
-                <PriceListLink />
+                <PriceListLink kind={rateKind(room)} />
               </span>
             </div>
             <div className="sum-row">

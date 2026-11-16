@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Calendar, Clock, Headphones, Hourglass, MapPin } from 'lucide-react'
-import { getLocation, quotedStay, roomAmenities, roomTaken, roomsAt, TIMES, typeOffers } from '../data'
+import { getLocation, quotedStay, rateKind, roomAmenities, roomTaken, roomsAt, TIMES, typeOffers } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -195,7 +195,7 @@ export function LocationDetailPage() {
                     <b className="price">
                       {formatMoney(price)} <small>/ {draft.overnight ? 'Qua đêm' : durationText(draft.duration)}</small>
                     </b>
-                    <PriceListLink />
+                    <PriceListLink kind={rateKind(room)} />
                   </span>
                   {location.openingSoon ? (
                     <span className="btn btn-line btn-sm soon-disabled">Opening soon</span>
