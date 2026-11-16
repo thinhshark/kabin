@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { PRICE_HOURS, PRICE_ROOMS, RATE_BANDS } from '../priceList'
+import { PRICE_HOURS, PRICE_ROOMS, RATE_BANDS, type PriceKind } from '../priceList'
 import { cx, formatMoney } from '../utils'
 
-export function PriceBoard() {
-  const [roomId, setRoomId] = useState<(typeof PRICE_ROOMS)[number]['id']>('lake')
+export function PriceBoard({ kind = 'lake' }: { kind?: PriceKind }) {
+  const [roomId, setRoomId] = useState<PriceKind>(kind)
 
   return (
     <div className="price-board">
@@ -81,7 +81,7 @@ export function PriceBoard() {
           </thead>
           <tbody>
             {PRICE_ROOMS.map((room) => (
-              <tr key={room.id}>
+              <tr key={room.id} className={room.id === roomId ? 'shown' : undefined}>
                 <th>{room.name}</th>
                 <td>{formatMoney(room.overnight.weekday)}</td>
                 <td>{formatMoney(room.overnight.weekend)}</td>
@@ -98,7 +98,7 @@ export function PriceBoard() {
   )
 }
 
-export function PriceListLink() {
+export function PriceListLink({ kind }: { kind?: PriceKind }) {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export function PriceListLink() {
             <button type="button" className="modal-x" aria-label="Đóng" onClick={() => setOpen(false)}>
               ×
             </button>
-            <PriceBoard />
+            <PriceBoard kind={kind} />
           </div>
         </div>
       ) : null}

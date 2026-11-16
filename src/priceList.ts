@@ -26,7 +26,7 @@ export type PriceKind = 'lake' | 'bench' | 'bath'
 export const PRICE_ROOMS = [
   {
     id: 'lake',
-    name: 'View hồ',
+    name: 'Classic · View hồ',
     hours: hourlyRates(
       {
         gold: [275_000, 325_000, 350_000, 389_000, 419_000, 435_000, 449_000],
@@ -39,7 +39,7 @@ export const PRICE_ROOMS = [
   },
   {
     id: 'bench',
-    name: 'View hồ có băng ghế gỗ',
+    name: 'Cozy · View hồ có ghế',
     hours: hourlyRates(
       {
         gold: [285_000, 340_000, 370_000, 414_000, 449_000, 470_000, 494_000],
@@ -52,7 +52,7 @@ export const PRICE_ROOMS = [
   },
   {
     id: 'bath',
-    name: 'View hồ có bồn tắm',
+    name: 'Signature · View hồ có bồn tắm',
     hours: hourlyRates(
       {
         gold: [305_000, 365_000, 400_000, 459_000, 489_000, 525_000, 549_000],

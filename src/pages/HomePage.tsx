@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowUp, Calendar, Clock, Hourglass, KeyRound, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
-import { LOCATIONS, locationsOpenFirst, PHOTOS, ROOM_TYPES } from '../data'
+import { LOCATIONS, locationsOpenFirst, PHOTOS, priceKindForType, ROOM_TYPES } from '../data'
 import { useStore } from '../store'
 import { DateField } from '../components/DateField'
 import { DurationSelect } from '../components/DurationSelect'
@@ -180,7 +180,7 @@ export function HomePage() {
                     <button type="button" className="btn btn-primary btn-sm" onClick={() => submit(room.type)}>
                       Xem phòng <ArrowRight size={15} />
                     </button>
-                    <PriceListLink />
+                    <PriceListLink kind={priceKindForType(room.type)} />
                   </div>
                 </div>
               </div>
@@ -338,7 +338,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section home-why">
         <div className="section-head">
           <div>
             <p className="kicker">Vì sao chọn Kabin</p>
