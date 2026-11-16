@@ -1,4 +1,4 @@
-import { asset, clockMinutes, formatMoney, shiftISO, todayISO } from './utils'
+import { asset, clockMinutes, durationText, formatMoney, shiftISO, todayISO } from './utils'
 import { listedFrom, listedFromDetail, listedHourly, listedOvernight, type PriceKind, type RateBand } from './priceList'
 
 export type Amenity =
@@ -41,12 +41,15 @@ export type Room = {
 export type Promo = {
   code: string
   title: string
-  kind: 'percent' | 'amount'
+  kind: 'percent' | 'amount' | 'hour'
   value: number
+  hours?: number
   cap?: number
   min: number
   locationId?: string
   until: string
+  note?: string
+  picker?: boolean
 }
 
 export type Faq = {
@@ -360,6 +363,27 @@ function fromFields(kind: PriceKind) {
 }
 
 export const PROMOS: Promo[] = [
+  {
+    code: 'GIAM20',
+    title: 'Giảm 20% tiền phòng',
+    kind: 'percent',
+    value: 20,
+    min: 0,
+    until: shiftISO(365),
+    note: 'Áp dụng mọi khung giờ, kể cả combo đêm.',
+    picker: true,
+  },
+  {
+    code: 'TANG1H',
+    title: 'Tặng thêm 1 giờ',
+    kind: 'hour',
+    value: 0,
+    hours: 1,
+    min: 0,
+    until: shiftISO(365),
+    note: 'Mỗi lượt lưu trú theo giờ được tặng 1 giờ, không giới hạn khung giờ. Không áp dụng combo đêm.',
+    picker: true,
+  },
   {
     code: 'KABIN10',
     title: 'Chào bạn đến Kabin',
@@ -709,26 +733,85 @@ export function isPromoExpired(promo: Promo) {
 }
 
 export function promoValueLabel(promo: Promo) {
+  if (promo.kind === 'hour') return `+${promo.hours ?? 1}h`
   if (promo.kind === 'percent') return `${promo.value}%`
   return formatMoney(promo.value)
 }
 
+export function parsePromoCodes(value: string) {
+  return [...new Set(value.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean))]
+}
+
+export function joinPromoCodes(codes: string[]) {
+  return parsePromoCodes(codes.join(' ')).join(', ')
+}
+
+export function applyPromos(code: string, price: number, locationId: string, overnight = false) {
+  const codes = parsePromoCodes(code)
+  if (!codes.length) return { amount: 0, bonusHours: 0, message: '', ok: true }
+
+  let amount = 0
+  let bonusHours = 0
+  const problems: string[] = []
+  const notes: string[] = []
+
+  for (const normalized of codes) {
+    const promo = PROMOS.find((item) => item.code === normalized)
+    if (!promo) {
+      problems.push('Không tìm thấy mã này.')
+      continue
+    }
+    if (isPromoExpired(promo)) {
+      problems.push(`Mã ${promo.code} đã hết hạn.`)
+      continue
+    }
+    if (promo.locationId && promo.locationId !== locationId) {
+      const location = getLocation(promo.locationId)
+      problems.push(`Mã ${promo.code} chỉ dùng tại ${location?.name ?? 'một cơ sở'}.`)
+      continue
+    }
+    if (promo.kind === 'hour') {
+      if (overnight) {
+        problems.push('Mã tặng giờ không áp dụng cho combo đêm.')
+        continue
+      }
+      const hours = promo.hours ?? 1
+      bonusHours += hours
+      notes.push(`tặng thêm ${hours} giờ`)
+      continue
+    }
+    if (price < promo.min) {
+      problems.push(`Mã ${promo.code} áp dụng cho booking từ ${formatMoney(promo.min)}.`)
+      continue
+    }
+    const raw = promo.kind === 'percent' ? Math.round((price * promo.value) / 100) : promo.value
+    const cut = Math.min(promo.cap ?? raw, raw, Math.max(0, price - amount))
+    amount += cut
+    notes.push(promo.kind === 'percent' ? `giảm ${promo.value}% tiền phòng` : `giảm ${formatMoney(cut)}`)
+  }
+
+  if (problems.length) return { amount: 0, bonusHours: 0, message: problems[0], ok: false }
+  return {
+    amount,
+    bonusHours,
+    message: notes.length ? `Đã áp dụng ${notes.join(' và ')}.` : '',
+    ok: true,
+  }
+}
+
 export function applyPromo(code: string, price: number, locationId: string) {
-  const normalized = code.trim().toUpperCase()
-  if (!normalized) return { amount: 0, message: '', ok: true }
-  const promo = PROMOS.find((item) => item.code === normalized)
-  if (!promo) return { amount: 0, message: 'Không tìm thấy mã này.', ok: false }
-  if (isPromoExpired(promo)) return { amount: 0, message: 'Mã đã hết hạn.', ok: false }
-  if (promo.locationId && promo.locationId !== locationId) {
-    const location = getLocation(promo.locationId)
-    return { amount: 0, message: `Mã chỉ dùng tại ${location?.name ?? 'một cơ sở'}.`, ok: false }
-  }
-  if (price < promo.min) {
-    return { amount: 0, message: `Áp dụng cho booking từ ${formatMoney(promo.min)}.`, ok: false }
-  }
-  const raw = promo.kind === 'percent' ? Math.round((price * promo.value) / 100) : promo.value
-  const amount = Math.min(promo.cap ?? raw, raw)
-  return { amount, message: 'Đã áp dụng mã ưu đãi.', ok: true }
+  const promo = applyPromos(code, price, locationId)
+  return { amount: promo.amount, message: promo.message, ok: promo.ok }
+}
+
+export function quotedStayHours(duration: number, overnight: boolean, bonusHours: number) {
+  if (overnight || bonusHours <= 0) return duration
+  return duration + bonusHours
+}
+
+export function stayLengthLabel(duration: number, bonusHours: number) {
+  if (bonusHours <= 0) return durationText(duration)
+  return `${durationText(duration)} + ${bonusHours} giờ tặng`
 }
 
 export function quoteOf(
@@ -742,12 +825,13 @@ export function quoteOf(
   const location = getLocation(room.locationId)
   if (!location) return null
   const base = quotedStay(room, { ...stay, duration })
-  const promo = applyPromo(promoCode, base, room.locationId)
+  const promo = applyPromos(promoCode, base, room.locationId, stay.overnight)
   return {
     room,
     location,
     base,
     discount: promo.ok ? promo.amount : 0,
+    bonusHours: promo.ok ? promo.bonusHours : 0,
     total: Math.max(0, base - (promo.ok ? promo.amount : 0)),
     promo,
   }

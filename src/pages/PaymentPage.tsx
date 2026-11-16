@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Download, RefreshCw, Timer } from 'lucide-react'
-import { quoteOf, rateKind } from '../data'
+import { quoteOf, quotedStayHours, rateKind, stayLengthLabel } from '../data'
 import { useStore } from '../store'
 import { PriceListLink } from '../components/PriceList'
 import { CopyButton, DemoQr, Photo, useTitle } from '../components/ui'
-import { checkoutLabel, durationText, formatDate, formatMoney } from '../utils'
+import { checkoutLabel, formatDate, formatMoney } from '../utils'
 
 export function PaymentPage() {
   useTitle('Thanh toán')
@@ -42,8 +42,8 @@ export function PaymentPage() {
 
   if (!quoted || draft.phase !== 'holding') return null
 
-  const { room, location, base, discount, total } = quoted
-  const end = checkoutLabel(draft.time, draft.duration)
+  const { room, location, base, discount, total, bonusHours } = quoted
+  const end = checkoutLabel(draft.time, quotedStayHours(draft.duration, draft.overnight, bonusHours))
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
   const account = '000000000000'
@@ -151,7 +151,7 @@ export function PaymentPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {durationText(draft.duration)}
+                {stayLengthLabel(draft.duration, bonusHours)}
               </li>
             </ul>
             <div className="sum-row">

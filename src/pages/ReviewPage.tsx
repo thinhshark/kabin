@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Lock } from 'lucide-react'
-import { quoteOf, rateKind } from '../data'
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ImagePlus, Lock } from 'lucide-react'
+import { isPromoExpired, joinPromoCodes, parsePromoCodes, PROMOS, quoteOf, quotedStayHours, rateKind, roomTaken, stayLengthLabel } from '../data'
 import { useStore } from '../store'
 import { PriceListLink } from '../components/PriceList'
 import type { PriceKind } from '../priceList'
 import { RefundTable, RuleFlags, StayRules } from '../components/StayRules'
 import { Photo, Stepper, useTitle } from '../components/ui'
-import { checkoutLabel, durationText, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
+import { checkoutLabel, formatDate, formatMoney, isPastSlot, isPhone, maskPhone, normalizePhone } from '../utils'
 
 export function ReviewPage() {
   useTitle('Kiểm tra đặt phòng')
-  const { draft, setDraft, user, openOtp, showToast, startHold } = useStore()
+  const { draft, bookings, setDraft, user, openOtp, showToast, startHold } = useStore()
   const navigate = useNavigate()
   const quoted = quoteOf(draft.roomId, draft.duration, draft.promoCode, {
     date: draft.date,
@@ -57,8 +57,11 @@ export function ReviewPage() {
     )
   }
 
-  const { room, location, base, discount, total, promo } = quoted
-  const end = checkoutLabel(draft.time, draft.duration)
+  const { room, location, base, discount, total, promo, bonusHours } = quoted
+  const stayHours = quotedStayHours(draft.duration, draft.overnight, bonusHours)
+  const end = checkoutLabel(draft.time, stayHours)
+  const giftBlocked =
+    !draft.overnight && roomTaken(room.id, draft.date, draft.time, draft.duration + 1, bookings)
 
   const verifyPhone = () => {
     if (!isPhone(draft.phone)) {
@@ -106,6 +109,9 @@ export function ReviewPage() {
     if (draft.promoCode && !promo.ok) {
       next.promo = promo.message
       list.push(promo.message)
+    } else if (bonusHours > 0 && giftBlocked) {
+      next.promo = 'Không còn trống để tặng thêm 1 giờ ở khung này.'
+      list.push(next.promo)
     }
     return { next, list }
   }
@@ -123,7 +129,7 @@ export function ReviewPage() {
 
   const continuePay = () => {
     setNotice(null)
-    setDraft({ phone: normalizePhone(draft.phone), promoCode: draft.promoCode.trim().toUpperCase() })
+    setDraft({ phone: normalizePhone(draft.phone), promoCode: joinPromoCodes(parsePromoCodes(draft.promoCode)) })
     startHold()
     navigate('/thanh-toan')
   }
@@ -217,33 +223,18 @@ export function ReviewPage() {
             {errors.id ? <span className="form-error">{errors.id}</span> : null}
           </section>
 
-          <section className="panel">
-            <h2>Mã ưu đãi</h2>
-            <div className="promo-row">
-              <input
-                value={draft.promoCode}
-                placeholder="Nhập mã ưu đãi"
-                onChange={(event) => setDraft({ promoCode: event.target.value.toUpperCase() })}
-              />
-              <button
-                type="button"
-                className="btn btn-line"
-                onClick={() => {
-                  if (!draft.promoCode.trim()) return
-                  if (!promo.ok) {
-                    setErrors((current) => ({ ...current, promo: promo.message }))
-                    return
-                  }
-                  setErrors((current) => ({ ...current, promo: '' }))
-                  showToast(promo.message)
-                }}
-              >
-                Áp dụng
-              </button>
-            </div>
-            {errors.promo ? <span className="form-error">{errors.promo}</span> : null}
-            {draft.promoCode && promo.ok ? <span className="hint ok">{promo.message}</span> : null}
-          </section>
+          <PromoPicker
+            code={draft.promoCode}
+            overnight={draft.overnight}
+            giftBlocked={giftBlocked}
+            error={errors.promo}
+            okMessage={draft.promoCode && promo.ok ? promo.message : ''}
+            onChange={(promoCode) => {
+              setDraft({ promoCode })
+              setErrors((current) => ({ ...current, promo: '' }))
+            }}
+            onToggle={(promoCode, selected) => showToast(selected ? `Đã chọn mã ${promoCode}` : `Đã bỏ mã ${promoCode}`)}
+          />
         </div>
 
         <aside className="side">
@@ -273,7 +264,7 @@ export function ReviewPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {durationText(draft.duration)}
+                {stayLengthLabel(draft.duration, bonusHours)}
               </li>
             </ul>
             <PayLines base={base} discount={discount} total={total} kind={rateKind(room)} />
@@ -437,6 +428,115 @@ function readIdPhoto(file: File) {
     }
     image.src = url
   })
+}
+
+function PromoPicker({
+  code,
+  overnight,
+  giftBlocked,
+  error,
+  okMessage,
+  onChange,
+  onToggle,
+}: {
+  code: string
+  overnight: boolean
+  giftBlocked: boolean
+  error?: string
+  okMessage: string
+  onChange: (code: string) => void
+  onToggle: (code: string, selected: boolean) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const selected = parsePromoCodes(code)
+  const offers = PROMOS.filter((promo) => promo.picker && !isPromoExpired(promo))
+
+  useEffect(() => {
+    if (!open) return
+    const close = (event: MouseEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  useEffect(() => {
+    if (!overnight) return
+    const codes = parsePromoCodes(code)
+    if (!codes.includes('TANG1H')) return
+    onChange(joinPromoCodes(codes.filter((item) => item !== 'TANG1H')))
+  }, [overnight, code, onChange])
+
+  const toggle = (promoCode: string) => {
+    const has = selected.includes(promoCode)
+    if (!has && promoCode === 'TANG1H' && (overnight || giftBlocked)) return
+    const next = has ? selected.filter((item) => item !== promoCode) : [...selected, promoCode]
+    onChange(joinPromoCodes(next))
+    onToggle(promoCode, !has)
+  }
+
+  return (
+    <section className="panel">
+      <h2>Mã ưu đãi</h2>
+      <div className="promo-box" ref={box}>
+        <div className="promo-row">
+          <input
+            value={code}
+            placeholder="Nhập mã ưu đãi"
+            aria-expanded={open}
+            aria-controls="promo-menu"
+            onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
+            onChange={(event) => onChange(event.target.value.toUpperCase())}
+          />
+          <button
+            type="button"
+            className="btn btn-line"
+            aria-expanded={open}
+            aria-controls="promo-menu"
+            onClick={() => setOpen(true)}
+          >
+            Chọn mã
+          </button>
+        </div>
+        {open ? (
+          <div className="promo-menu" id="promo-menu" role="listbox" aria-multiselectable="true">
+            <p>Có thể chọn cả hai mã.</p>
+            {offers.map((promo) => {
+              const on = selected.includes(promo.code)
+              const disabled = promo.code === 'TANG1H' && !on && (overnight || giftBlocked)
+              const detail = disabled
+                ? overnight
+                  ? 'Không áp dụng cho combo đêm.'
+                  : 'Không còn trống để tặng thêm 1 giờ ở khung này.'
+                : promo.note
+              return (
+                <button
+                  key={promo.code}
+                  type="button"
+                  role="option"
+                  aria-selected={on}
+                  className={on ? 'promo-option on' : 'promo-option'}
+                  disabled={disabled}
+                  onClick={() => toggle(promo.code)}
+                >
+                  <span className="promo-mark">{on ? <Check size={12} /> : null}</span>
+                  <span>
+                    <strong>{promo.title}</strong>
+                    <small>{detail}</small>
+                  </span>
+                  <b>{promo.code}</b>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
+      </div>
+      {error ? <span className="form-error">{error}</span> : null}
+      {okMessage ? <span className="hint ok">{okMessage}</span> : null}
+    </section>
+  )
 }
 
 function PayLines({ base, discount, total, kind }: { base: number; discount: number; total: number; kind?: PriceKind }) {

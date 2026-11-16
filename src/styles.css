@@ -234,6 +234,27 @@ ul { margin: 0; padding: 0; list-style: none; }
 .verified { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 13px; white-space: nowrap; }
 .promo-row { display: flex; gap: 8px; }
 .promo-row input { flex: 1; }
+.promo-box { display: grid; gap: 8px; }
+.promo-menu {
+  display: grid; gap: 4px; padding: 8px; background: white;
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.promo-menu > p { margin: 2px 8px 6px; color: var(--muted); font-size: 13px; }
+.promo-option {
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center;
+  width: 100%; text-align: left; border: 0; background: transparent; border-radius: 10px; padding: 10px;
+  cursor: pointer;
+}
+.promo-option strong { display: block; font-size: 14px; }
+.promo-option small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1.4; }
+.promo-option b { color: var(--brand); font-size: 13px; letter-spacing: 0.02em; }
+.promo-option.on { background: var(--brand-soft); }
+.promo-option:disabled { opacity: 0.55; cursor: not-allowed; }
+.promo-mark {
+  width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #d9cfc6;
+  display: grid; place-items: center; color: white;
+}
+.promo-option.on .promo-mark { background: var(--brand); border-color: var(--brand); }
 .id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .id-slot { display: grid; gap: 6px; align-content: start; }
 .id-slot > span:first-child { font-weight: 650; font-size: 14px; }

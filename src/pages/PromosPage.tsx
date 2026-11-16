@@ -55,7 +55,7 @@ export function PromosPage() {
           return (
             <article key={promo.code} className={cx('voucher', expired && 'expired')}>
               <div className="voucher-value">
-                <span>GIẢM</span>
+                <span>{promo.kind === 'hour' ? 'TẶNG' : 'GIẢM'}</span>
                 <strong>{promoValueLabel(promo)}</strong>
                 {expired ? <em>Đã hết hạn</em> : null}
               </div>
@@ -92,8 +92,9 @@ export function PromosPage() {
                   </button>
                 </p>
                 <ul>
+                  {promo.note ? <li>{promo.note}</li> : null}
                   {promo.kind === 'percent' && promo.cap ? <li>Tối đa {formatMoney(promo.cap)}</li> : null}
-                  <li>Booking từ {formatMoney(promo.min)}</li>
+                  {promo.min > 0 ? <li>Booking từ {formatMoney(promo.min)}</li> : null}
                   {location ? <li>{location.name}</li> : null}
                   <li>{expired ? `Hết hạn ${formatDate(promo.until)}` : `Đến ${formatDate(promo.until)}`}</li>
                 </ul>

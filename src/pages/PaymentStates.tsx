@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Home, Headphones, RefreshCw } from 'lucide-react'
-import { quoteOf } from '../data'
+import { quoteOf, quotedStayHours, stayLengthLabel } from '../data'
 import { useStore } from '../store'
 import { Photo, useTitle } from '../components/ui'
-import { checkoutLabel, durationText, formatDate, formatMoney, maskPhone } from '../utils'
+import { checkoutLabel, formatDate, formatMoney, maskPhone } from '../utils'
 
 export function ExpiredPage() {
   useTitle('Hết thời gian giữ phòng')
@@ -14,7 +14,7 @@ export function ExpiredPage() {
     time: draft.time,
     overnight: draft.overnight,
   })
-  const end = checkoutLabel(draft.time, draft.duration)
+  const end = checkoutLabel(draft.time, quotedStayHours(draft.duration, draft.overnight, quoted?.bonusHours ?? 0))
 
   return (
     <div className="wrap page narrow center-page">
@@ -49,7 +49,7 @@ export function ExpiredPage() {
               </li>
               <li>
                 <span>Thời lượng</span>
-                {durationText(draft.duration)}
+                {stayLengthLabel(draft.duration, quoted.bonusHours)}
               </li>
             </ul>
             <div className="sum-row">
@@ -101,7 +101,7 @@ export function LatePage() {
     time: draft.time,
     overnight: draft.overnight,
   })
-  const end = checkoutLabel(draft.time, draft.duration)
+  const end = checkoutLabel(draft.time, quotedStayHours(draft.duration, draft.overnight, quoted?.bonusHours ?? 0))
 
   return (
     <div className="wrap page narrow center-page">
@@ -134,7 +134,7 @@ export function LatePage() {
               Phòng {quoted.room.type}
             </p>
             <p>
-              {formatDate(draft.date)} · {draft.time}–{end.text} ({durationText(draft.duration)})
+              {formatDate(draft.date)} · {draft.time}–{end.text} ({stayLengthLabel(draft.duration, quoted.bonusHours)})
             </p>
           </div>
         </article>

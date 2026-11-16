@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { DEMO_PHONE, DEMO_USER, getRoom, LOCATIONS, quoteOf, roomTaken, roomsAt, SEED_BOOKINGS, type Booking } from './data'
+import { DEMO_PHONE, DEMO_USER, getRoom, LOCATIONS, quoteOf, quotedStayHours, roomTaken, roomsAt, SEED_BOOKINGS, type Booking } from './data'
 import { checkoutLabel, isPastSlot, nextBookableSlot, normalizePhone, overnightStay, todayISO } from './utils'
 
 export type User = {
@@ -317,12 +317,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     confirmPaid: () => {
       const current = draftRef.current
       const chosen = getRoom(current.roomId)
+      const preview = quoteOf(current.roomId, current.duration, current.promoCode, {
+        date: current.date,
+        time: current.time,
+        overnight: current.overnight,
+      })
+      const stayDuration = quotedStayHours(current.duration, current.overnight, preview?.bonusHours ?? 0)
       const roomId =
         roomsAt(chosen?.locationId ?? current.locationId).find(
           (room) =>
             room.type === chosen?.type &&
             room.available &&
-            !roomTaken(room.id, current.date, current.time, current.duration, bookings),
+            !roomTaken(room.id, current.date, current.time, stayDuration, bookings),
         )?.id ?? current.roomId
       const quoted = quoteOf(roomId, current.duration, current.promoCode, {
         date: current.date,
@@ -336,7 +342,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         roomId,
         date: current.date,
         time: current.time,
-        duration: current.duration,
+        duration: stayDuration,
         price: quoted?.base ?? 0,
         discount: quoted?.discount ?? 0,
         guestName: current.name,
@@ -366,7 +372,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         roomId: current.roomId,
         date: current.date,
         time: current.time,
-        duration: current.duration,
+        duration: quotedStayHours(current.duration, current.overnight, quoted?.bonusHours ?? 0),
         price: quoted?.base ?? 0,
         discount: quoted?.discount ?? 0,
         guestName: current.name,
